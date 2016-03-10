@@ -1,7 +1,7 @@
 package jpsplus
 
 import (
-	// "fmt"
+	"fmt"
 	"image"
 	"os"
 )
@@ -11,6 +11,7 @@ import _ "image/png"
 func openImage(filename string) image.Image {
 	f, err := os.Open(filename)
 	if err != nil {
+		fmt.Printf("err = %v\n", err.Error())
 		return nil
 	}
 	defer f.Close()
@@ -44,7 +45,7 @@ func parseImage(img image.Image) []bool {
 func GetMapFromImage(filename string) ([]bool, int, int) {
 	img := openImage(filename)
 	if img == nil {
-		return []bool{}, 0, 0E
+		return []bool{}, 0, 0
 	}
 	return parseImage(img), img.Bounds().Max.X, img.Bounds().Max.Y
 }

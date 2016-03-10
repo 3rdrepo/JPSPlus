@@ -1,5 +1,9 @@
 package jpsplus
 
+import (
+	"fmt"
+)
+
 const (
 	Down = iota
 	DownRight
@@ -27,17 +31,17 @@ const (
 )
 
 type DistantJumpPoints struct {
-	jumpDistance [8]int16
+	jumpDistance [8]int
 }
 
 type GoalBounds struct {
-	bounds [8][4]int16
+	bounds [8][4]int
 }
 
 type JumpDistancesAndGoalBounds struct {
-	blockedDirectionBitfield uint8
-	jumpDistance             [8]int16
-	bounds                   [8][4]int16
+	blockedDirectionBitfield int
+	jumpDistance             [8]int
+	bounds                   [8][4]int
 }
 
 type PrecomputeMap struct {
@@ -45,7 +49,7 @@ type PrecomputeMap struct {
 	m_width                         int
 	m_height                        int
 	m_map                           []bool
-	m_jumpPointMap                  [][]uint8
+	m_jumpPointMap                  [][]int
 	m_distantJumpPointMap           [][]DistantJumpPoints
 	m_goalBoundsMap                 [][]GoalBounds
 	m_jumpDistancesAndGoalBoundsMap []*JumpDistancesAndGoalBounds
@@ -57,11 +61,11 @@ func newPrecomputeMap(width int, height int, mAp []bool) *PrecomputeMap {
 	p.m_width = width
 	p.m_height = height
 	p.m_map = mAp
-	p.m_jumpPointMap = make([]([]uint8), height)
+	p.m_jumpPointMap = make([]([]int), height)
 	p.m_distantJumpPointMap = make([]([]DistantJumpPoints), height)
 	p.m_goalBoundsMap = make([]([]GoalBounds), height)
 	for pos := 0; pos < height; pos++ {
-		p.m_jumpPointMap[pos] = make([]uint8, width)
+		p.m_jumpPointMap[pos] = make([]int, width)
 		p.m_distantJumpPointMap[pos] = make([]DistantJumpPoints, width)
 		p.m_goalBoundsMap[pos] = make([]GoalBounds, width)
 	}
@@ -330,8 +334,8 @@ func (p *PrecomputeMap) CalculateGoalBounding() {
 	dijkstra := newDijkstraFloodfill(p.m_width, p.m_height, p.m_map, p.m_distantJumpPointMap)
 
 	// InitArray(m_goalBoundsMap, m_width, m_height);
-	for r := 0; r < m_height; r++ {
-		for c := 0; c < m_width; c++ {
+	for r := 0; r < p.m_height; r++ {
+		for c := 0; c < p.m_width; c++ {
 			for dir := 0; dir < 8; dir++ {
 				p.m_goalBoundsMap[r][c].bounds[dir][MinRow] = p.m_height
 				p.m_goalBoundsMap[r][c].bounds[dir][MaxRow] = 0
@@ -341,24 +345,23 @@ func (p *PrecomputeMap) CalculateGoalBounding() {
 		}
 	}
 
-	for startRow := 0; startRow < m_height; startRow++ {
+	for startRow := 0; startRow < p.m_height; startRow++ {
 		fmt.Printf("Row: %d\n", startRow)
 
-		for startCol := 0; startCol < m_width; startCol++ {
+		for startCol := 0; startCol < p.m_width; startCol++ {
 			if p.IsEmpty(startRow, startCol) {
 				dijkstra.Flood(startRow, startCol)
 				currentIteration := dijkstra.GetCurrentInteration()
 
-				for r := 0; r < m_height; r++ {
-					I
-					for c := 0; c < m_width; c++ {
+				for r := 0; r < p.m_height; r++ {
+					for c := 0; c < p.m_width; c++ {
 						if p.IsEmpty(r, c) {
 							iteration := dijkstra.m_mapNodes[r][c].m_iteration
 							status := dijkstra.m_mapNodes[r][c].m_listStatus
 							dir := dijkstra.m_mapNodes[r][c].m_directionFromStart
 
 							if iteration == currentIteration &&
-								status == OnClosed &&
+								status == PathfindingNode_OnClosed &&
 								dir >= 0 && dir <= 7 {
 								row := dijkstra.m_mapNodes[r][c].m_row
 								col := dijkstra.m_mapNodes[r][c].m_col

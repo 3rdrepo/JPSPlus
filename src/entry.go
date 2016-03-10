@@ -7,6 +7,8 @@ import (
 func PreprocessMap(bits []bool, w int, h int, filename string) {
 	fmt.Printf("Writing to file '%s'\n", filename)
 	precomputeMap := newPrecomputeMap(w, h, bits)
+	// fmt.Printf("precomputeMap = %#v\n", precomputeMap)
+
 	precomputeMap.CalculateMap()
 	fmt.Printf("precomputeMap = %#v\n", precomputeMap)
 	// precomputeMap.SaveMap(filename)
