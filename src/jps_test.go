@@ -9,7 +9,7 @@ func TestJPSplus(*testing.T) {
 	// mapData := make([]bool, 0, 10000)
 	// thePath := make([]Point, 0, 10000)
 
-	mapData, width, height := GetMapFromImage("map100_100.png")
+	mapData, width, height := GetMapFromImage("map100_100P.png")
 	fmt.Printf("width = %v height = %v\n", width, height)
 	// fmt.Printf("mapData = %v\n", mapData)
 	PreprocessMap(mapData, width, height, "mapPreprocessedFilename")

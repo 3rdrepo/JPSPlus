@@ -44,7 +44,7 @@ func parseImage(img image.Image) []bool {
 func GetMapFromImage(filename string) ([]bool, int, int) {
 	img := openImage(filename)
 	if img == nil {
-		return []bool{}, 0, 0
+		return []bool{}, 0, 0E
 	}
 	return parseImage(img), img.Bounds().Max.X, img.Bounds().Max.Y
 }
