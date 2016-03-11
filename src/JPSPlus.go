@@ -71,9 +71,12 @@ func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
 
 	// Actual search
 	status := j.SearchLoop(startNode)
+	fmt.Printf("status == %#v\n", status)
+
 	if status == PathFound {
-		fmt.Printf("jps == %#v\n", j.m_mapNodes)
+		// fmt.Printf("jps == %#v\n", j.m_mapNodes)
 		path := j.FinalizePath() //路径后续处理
+		fmt.Printf("path == %v\n", path)
 		return path, true
 	} else {
 		// No path
@@ -93,6 +96,8 @@ func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
 
 	JPSPlusExplore_AllDirections(startNode, jump, j)
 	startNode.m_listStatus = PathfindingNode_OnClosed
+	fmt.Println(!j.m_simpleUnsortedPriorityQueue.Empty())
+	fmt.Println(!j.m_fastStack.Empty())
 
 	for !j.m_simpleUnsortedPriorityQueue.Empty() || !j.m_fastStack.Empty() {
 		var currentNode *PathfindingNode

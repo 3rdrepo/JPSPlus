@@ -16,15 +16,16 @@ func TestJPSplus(*testing.T) {
 		PreprocessMap("mapPreprocessedFilename")
 		jps := newJPSPlus()
 		s := xyLocJPS{0, 0}
-		g := xyLocJPS{9, 9}
-		jps.GetPath(s, g)
-		fmt.Printf("jps.m_simpleUnsortedPriorityQueue = %#v\n", jps.m_simpleUnsortedPriorityQueue)
-		fmt.Printf("jps.m_fastStack = %#v\n", jps.m_fastStack)
-		fmt.Printf("jps.m_mapNodes = %#v\n", jps.m_mapNodes)
+		g := xyLocJPS{0, 1}
+		path, ok := jps.GetPath(s, g)
+		fmt.Printf("ok = %v , path = %v\n", ok, path)
+		// fmt.Printf("jps.m_simpleUnsortedPriorityQueue = %#v\n", jps.m_simpleUnsortedPriorityQueue)
+		// fmt.Printf("jps.m_fastStack = %#v\n", jps.m_fastStack)
+		// fmt.Printf("jps.m_mapNodes = %#v\n", jps.m_mapNodes)
 		fmt.Printf("jps.m_currentIteration = %#v\n", jps.m_currentIteration)
-		fmt.Printf("jps.m_goalNode = %#v\n", jps.m_goalNode)
-		fmt.Printf("jps.m_goalRow = %#v\n", jps.m_goalRow)
-		fmt.Printf("jps.m_goalCol = %#v\n", jps.m_goalCol)
+		// fmt.Printf("jps.m_goalNode = %#v\n", jps.m_goalNode)
+		// fmt.Printf("jps.m_goalRow = %#v\n", jps.m_goalRow)
+		// fmt.Printf("jps.m_goalCol = %#v\n", jps.m_goalCol)
 
 	} else {
 		fmt.Println("open mapfile faild")
