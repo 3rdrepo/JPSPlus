@@ -1,5 +1,9 @@
 package jpsplus
 
+import (
+	"fmt"
+)
+
 const (
 	Working = iota
 	PathFound
@@ -50,18 +54,15 @@ func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
 	j.m_goalRow = g.y
 	j.m_goalCol = g.x
 
-	{
-		// Initialize map
+	// Initialize map
+	j.m_goalNode = j.m_mapNodes.get(j.m_goalRow, j.m_goalCol)
+	j.m_currentIteration += 1
 
-		j.m_goalNode = &j.m_mapNodes[j.m_goalRow][j.m_goalCol]
-		j.m_currentIteration += 1
-
-		j.m_fastStack.Reset()
-		j.m_simpleUnsortedPriorityQueue.Reset()
-	}
+	j.m_fastStack.Reset()
+	j.m_simpleUnsortedPriorityQueue.Reset()
 
 	// Create starting node
-	startNode := &j.m_mapNodes[startRow][startCol]
+	startNode := j.m_mapNodes.get(startRow, startCol)
 	startNode.m_parent = nil
 	startNode.m_givenCost = 0
 	startNode.m_finalCost = 0
@@ -71,6 +72,7 @@ func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
 	// Actual search
 	status := j.SearchLoop(startNode)
 	if status == PathFound {
+		fmt.Printf("jps == %#v\n", j.m_mapNodes)
 		path := j.FinalizePath() //路径后续处理
 		return path, true
 	} else {
@@ -80,17 +82,17 @@ func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
 }
 
 func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
-	{
-		// Special case for the starting node
+	// Special case for the starting node
 
-		if startNode == j.m_goalNode {
-			return PathFound
-		}
-
-		// jumpDistancesAndGoalBounds := &j.m_jumpDistancesAndGoalBounds[startNode.m_row][startNode.m_col]
-		j.Explore_AllDirections(startNode, j)
-		startNode.m_listStatus = PathfindingNode_OnClosed
+	if startNode == j.m_goalNode {
+		return PathFound
 	}
+
+	// jumpDistancesAndGoalBounds := &j.m_jumpDistancesAndGoalBounds[startNode.m_row][startNode.m_col]
+	jump := DefaultJumpDistancesAndGoalBounds.get(startNode.m_row, startNode.m_col)
+
+	JPSPlusExplore_AllDirections(startNode, jump, j)
+	startNode.m_listStatus = PathfindingNode_OnClosed
 
 	for !j.m_simpleUnsortedPriorityQueue.Empty() || !j.m_fastStack.Empty() {
 		var currentNode *PathfindingNode
@@ -107,9 +109,8 @@ func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
 
 		// Explore nodes based on parent
 		// jumpDistancesAndGoalBounds := &j.m_jumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-
-		exploreDirections[(jumpDistancesAndGoalBounds.blockedDirectionBitfield*8)+
-			currentNode.m_directionFromParent](currentNode, j)
+		jump := DefaultJumpDistancesAndGoalBounds.get(currentNode.m_row, currentNode.m_col)
+		exploreDirections[(jump.blockedDirectionBitfield*8)+currentNode.m_directionFromParent](currentNode, jump, j)
 
 		currentNode.m_listStatus = PathfindingNode_OnClosed
 	}
@@ -121,8 +122,7 @@ func (j *JPSPlus) FinalizePath() []xyLocJPS {
 	curNode := j.m_goalNode
 	finalPath := make([]xyLocJPS, 0, 100)
 
-	while(curNode != nil)
-	{
+	for nil != curNode {
 		loc := xyLocJPS{curNode.m_col, curNode.m_row}
 
 		if prevNode != nil {
@@ -163,7 +163,7 @@ func (j *JPSPlus) FinalizePath() []xyLocJPS {
 			}
 		}
 
-		finalPath = append(finalPath, locNew)
+		finalPath = append(finalPath, loc)
 		prevNode = curNode
 		curNode = curNode.m_parent
 	}
@@ -178,374 +178,366 @@ func reverse(path []xyLocJPS) []xyLocJPS {
 	return path
 }
 
-func MacroExploreDown(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if jpsPlus.m_goalRow >= jmp.bounds[Down][MinRow] &&
-		jpsPlus.m_goalRow <= jmp.bounds[Down][MaxRow] &&
-		jpsPlus.m_goalCol >= jmp.bounds[Down][MinCol] &&
-		jpsPlus.m_goalCol <= jmp.bounds[Down][MaxCol] {
-		jpsPlus.SearchDown(currentNode, jum.jumpDistance[Down])
+func MacroExploreDown(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[Down][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[Down][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[Down][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[Down][MaxCol] {
+		jpsPlus.SearchDown(currentNode, jump.jumpDistance.get(Down))
 	}
 }
 
-func MacroExploreDownRight(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[DownRight][MinRow] &&
-		m_goalRow <= jmp.bounds[DownRight][MaxRow] &&
-		m_goalCol >= jmp.bounds[DownRight][MinCol] &&
-		m_goalCol <= jmp.bounds[DownRight][MaxCol] {
-		jpsPlus.SearchDownRight(currentNode, jmp.jumpDistance[DownRight])
+func MacroExploreDownRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[DownRight][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[DownRight][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[DownRight][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[DownRight][MaxCol] {
+		jpsPlus.SearchDownRight(currentNode, jump.jumpDistance.get(DownRight))
 	}
 
 }
 
-func MacroExploreRight(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[Right][MinRow] &&
-		m_goalRow <= jmp.bounds[Right][MaxRow] &&
-		m_goalCol >= jmp.bounds[Right][MinCol] &&
-		m_goalCol <= jmp.bounds[Right][MaxCol] {
-		jpsPlus.SearchRight(currentNode, jmp.jumpDistance[Right])
+func MacroExploreRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[Right][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[Right][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[Right][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[Right][MaxCol] {
+		jpsPlus.SearchRight(currentNode, jump.jumpDistance.get(Right))
 	}
 }
 
-func MacroExploreUpRight(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[UpRight][MinRow] &&
-		m_goalRow <= jmp.bounds[UpRight][MaxRow] &&
-		m_goalCol >= jmp.bounds[UpRight][MinCol] &&
-		m_goalCol <= jmp.bounds[UpRight][MaxCol] {
-		jpsPlus.SearchUpRight(currentNode, jmp.jumpDistance[UpRight])
+func MacroExploreUpRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[UpRight][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[UpRight][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[UpRight][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[UpRight][MaxCol] {
+		jpsPlus.SearchUpRight(currentNode, jump.jumpDistance.get(UpRight))
 	}
 }
 
-func MacroExploreUp(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[Up][MinRow] &&
-		m_goalRow <= jmp.bounds[Up][MaxRow] &&
-		m_goalCol >= jmp.bounds[Up][MinCol] &&
-		m_goalCol <= jmp.bounds[Up][MaxCol] {
-		jpsPlus.SearchUp(currentNode, jmp.jumpDistance[Up])
+func MacroExploreUp(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[Up][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[Up][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[Up][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[Up][MaxCol] {
+		jpsPlus.SearchUp(currentNode, jump.jumpDistance.get(Up))
 	}
 }
 
-func MacroExploreUpLeft(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[UpLeft][MinRow] &&
-		m_goalRow <= jmp.bounds[UpLeft][MaxRow] &&
-		m_goalCol >= jmp.bounds[UpLeft][MinCol] &&
-		m_goalCol <= jmp.bounds[UpLeft][MaxCol] {
-		jpsPlus.SearchUpLeft(currentNode, jmp.jumpDistance[UpLeft])
+func MacroExploreUpLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[UpLeft][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[UpLeft][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[UpLeft][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[UpLeft][MaxCol] {
+		jpsPlus.SearchUpLeft(currentNode, jump.jumpDistance.get(UpLeft))
 	}
 }
 
-func MacroExploreLeft(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[Left][MinRow] &&
-		m_goalRow <= jmp.bounds[Left][MaxRow] &&
-		m_goalCol >= jmp.bounds[Left][MinCol] &&
-		m_goalCol <= jmp.bounds[Left][MaxCol] {
-		jpsPlus.SearchLeft(currentNode, jmp.jumpDistance[Left])
+func MacroExploreLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[Left][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[Left][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[Left][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[Left][MaxCol] {
+		jpsPlus.SearchLeft(currentNode, jump.jumpDistance.get(Left))
 	}
 }
 
-func MacroExploreDownLeft(currentNode *PathfindingNode, jpsPlus *JPSPlus) {
-	jum := DefaultJumpDistancesAndGoalBounds[currentNode.m_row][currentNode.m_col]
-	if m_goalRow >= jmp.bounds[DownLeft][MinRow] &&
-		m_goalRow <= jmp.bounds[DownLeft][MaxRow] &&
-		m_goalCol >= jmp.bounds[DownLeft][MinCol] &&
-		m_goalCol <= jmp.bounds[DownLeft][MaxCol] {
-		jpsPlus.SearchDownLeft(currentNode, jmp.jumpDistance[DownLeft])
+func MacroExploreDownLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
+	if jpsPlus.m_goalRow >= jump.bounds[DownLeft][MinRow] &&
+		jpsPlus.m_goalRow <= jump.bounds[DownLeft][MaxRow] &&
+		jpsPlus.m_goalCol >= jump.bounds[DownLeft][MinCol] &&
+		jpsPlus.m_goalCol <= jump.bounds[DownLeft][MaxCol] {
+		jpsPlus.SearchDownLeft(currentNode, jump.jumpDistance.get(DownLeft))
 	}
 }
 
-func JPSPlusExplore_Null(currentNode *PathfindingNode, jps *JPSPlus) {
+func JPSPlusExplore_Null(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
 	// Purposely does nothing
 }
 
-func JPSPlusExplore_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownRight(currentNode, jps)
+func JPSPlusExplore_DR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpRight(currentNode, jps)
+func JPSPlusExplore_UR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpLeft(currentNode, jps)
+func JPSPlusExplore_UL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownLeft(currentNode, jps)
+func JPSPlusExplore_DL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownLeft(currentNode, jump, jps)
 }
 
 // Adjacent Doubles
 
-func JPSPlusExplore_D_DR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
+func JPSPlusExplore_D_DR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DR_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_DR_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_UR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
+func JPSPlusExplore_R_UR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UR_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_UR_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_UL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
+func JPSPlusExplore_U_UL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UL_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_UL_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_DL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
+func JPSPlusExplore_L_DL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DL_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_DL_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
 // Non-Adjacent Cardinal Doubles
 
-func JPSPlusExplore_D_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_D_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_R_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_U_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_L_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_D_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_D_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_R_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
 // Adjacent Triples
 
-func JPSPlusExplore_D_DR_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_D_DR_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DR_R_UR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
+func JPSPlusExplore_DR_R_UR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_UR_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_R_UR_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UR_U_UL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
+func JPSPlusExplore_UR_U_UL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_UL_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_U_UL_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_UL_L_DL(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
+func JPSPlusExplore_UL_L_DL(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_DL_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_L_DL_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_DL_D_DR(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
+func JPSPlusExplore_DL_D_DR(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
 }
 
 // Non-Adjacent Cardinal Triples
 
-func JPSPlusExplore_D_R_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_D_R_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_U_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_R_U_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_L_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_U_L_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_D_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_L_D_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
 // Quads
 
-func JPSPlusExplore_R_DR_D_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_R_DR_D_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_R_D_DL_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_R_D_DL_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_UR_R_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_U_UR_R_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_R_DR_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_U_R_DR_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_UL_U_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_L_UL_U_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_U_UR_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_L_U_UR_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_D_DL_L_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_D_DL_L_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_D_L_UL_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_D_L_UL_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
 // Quints
 
-func JPSPlusExplore_R_DR_D_DL_L(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
+func JPSPlusExplore_R_DR_D_DL_L(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_U_UR_R_DR_D(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
-	MacroExploreDown(currentNode, jps)
+func JPSPlusExplore_U_UR_R_DR_D(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
+	MacroExploreDown(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_L_UL_U_UR_R(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
+func JPSPlusExplore_L_UL_U_UR_R(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_D_DL_L_UL_U(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
+func JPSPlusExplore_D_DL_L_UL_U(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
 }
 
-func JPSPlusExplore_AllDirections(currentNode *PathfindingNode, jps *JPSPlus) {
-	MacroExploreDown(currentNode, jps)
-	MacroExploreDownLeft(currentNode, jps)
-	MacroExploreLeft(currentNode, jps)
-	MacroExploreUpLeft(currentNode, jps)
-	MacroExploreUp(currentNode, jps)
-	MacroExploreUpRight(currentNode, jps)
-	MacroExploreRight(currentNode, jps)
-	MacroExploreDownRight(currentNode, jps)
+func JPSPlusExplore_AllDirections(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {
+	MacroExploreDown(currentNode, jump, jps)
+	MacroExploreDownLeft(currentNode, jump, jps)
+	MacroExploreLeft(currentNode, jump, jps)
+	MacroExploreUpLeft(currentNode, jump, jps)
+	MacroExploreUp(currentNode, jump, jps)
+	MacroExploreUpRight(currentNode, jump, jps)
+	MacroExploreRight(currentNode, jump, jps)
+	MacroExploreDownRight(currentNode, jump, jps)
 }
 
 func (j *JPSPlus) SearchDown(currentNode *PathfindingNode, jumpDistance int) {
@@ -572,7 +564,7 @@ func (j *JPSPlus) SearchDown(currentNode *PathfindingNode, jumpDistance int) {
 		// Directly jump
 		newRow := row + jumpDistance
 		givenCost := currentNode.m_givenCost + fixed_point_shift(jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][col]
+		newSuccessor := j.m_mapNodes.get(newRow, col)
 		j.PushNewNode(newSuccessor, currentNode, Down, givenCost)
 	}
 }
@@ -599,7 +591,7 @@ func (j *JPSPlus) SearchDownRight(currentNode *PathfindingNode, jumpDistance int
 			newRow := row + smallerDiff
 			newCol := col + smallerDiff
 			givenCost := currentNode.m_givenCost + int64(SQRT_2*smallerDiff)
-			newSuccessor := &j.m_mapNodes[newRow][newCol]
+			newSuccessor := j.m_mapNodes.get(newRow, newCol)
 			j.PushNewNode(newSuccessor, currentNode, DownRight, givenCost)
 			return
 		}
@@ -609,8 +601,8 @@ func (j *JPSPlus) SearchDownRight(currentNode *PathfindingNode, jumpDistance int
 		// Directly jump
 		newRow := row + jumpDistance
 		newCol := col + jumpDistance
-		givenCost := currentNode.m_givenCost + (SQRT_2 * jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][newCol]
+		givenCost := currentNode.m_givenCost + int64(SQRT_2*jumpDistance)
+		newSuccessor := j.m_mapNodes.get(newRow, newCol)
 		j.PushNewNode(newSuccessor, currentNode, DownRight, givenCost)
 	}
 }
@@ -639,7 +631,7 @@ func (j *JPSPlus) SearchRight(currentNode *PathfindingNode, jumpDistance int) {
 		// Directly jump
 		newCol := col + jumpDistance
 		givenCost := currentNode.m_givenCost + fixed_point_shift(jumpDistance)
-		PathfindingNode * newSuccessor = &j.m_mapNodes[row][newCol]
+		newSuccessor := j.m_mapNodes.get(row, newCol)
 		j.PushNewNode(newSuccessor, currentNode, Right, givenCost)
 	}
 }
@@ -650,7 +642,7 @@ func (j *JPSPlus) SearchUpRight(currentNode *PathfindingNode, jumpDistance int) 
 
 	// Check for goal in general direction (straight line to Goal or Target Jump Point)
 	if row > j.m_goalRow && col < j.m_goalCol {
-		absJumpDistance = jumpDistance
+		absJumpDistance := jumpDistance
 		if absJumpDistance < 0 {
 			absJumpDistance = -absJumpDistance
 		}
@@ -665,8 +657,8 @@ func (j *JPSPlus) SearchUpRight(currentNode *PathfindingNode, jumpDistance int) 
 		if smallerDiff <= absJumpDistance {
 			newRow := row - smallerDiff
 			newCol := col + smallerDiff
-			givenCost := currentNode.m_givenCost + (SQRT_2 * smallerDiff)
-			newSuccessor := &j.m_mapNodes[newRow][newCol]
+			givenCost := currentNode.m_givenCost + int64(SQRT_2*smallerDiff)
+			newSuccessor := j.m_mapNodes.get(newRow, newCol)
 			j.PushNewNode(newSuccessor, currentNode, UpRight, givenCost)
 			return
 		}
@@ -676,8 +668,8 @@ func (j *JPSPlus) SearchUpRight(currentNode *PathfindingNode, jumpDistance int) 
 		// Directly jump
 		newRow := row - jumpDistance
 		newCol := col + jumpDistance
-		givenCost := currentNode.m_givenCost + (SQRT_2 * jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][newCol]
+		givenCost := currentNode.m_givenCost + int64(SQRT_2*jumpDistance)
+		newSuccessor := j.m_mapNodes.get(newRow, newCol)
 		j.PushNewNode(newSuccessor, currentNode, UpRight, givenCost)
 	}
 }
@@ -706,7 +698,7 @@ func (j *JPSPlus) SearchUp(currentNode *PathfindingNode, jumpDistance int) {
 		// Directly jump
 		newRow := row - jumpDistance
 		givenCost := currentNode.m_givenCost + fixed_point_shift(jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][col]
+		newSuccessor := j.m_mapNodes.get(newRow, col)
 		j.PushNewNode(newSuccessor, currentNode, Up, givenCost)
 	}
 }
@@ -733,7 +725,7 @@ func (j *JPSPlus) SearchUpLeft(currentNode *PathfindingNode, jumpDistance int) {
 			newRow := row - smallerDiff
 			newCol := col - smallerDiff
 			givenCost := currentNode.m_givenCost + int64(SQRT_2*smallerDiff)
-			newSuccessor := &j.m_mapNodes[newRow][newCol]
+			newSuccessor := j.m_mapNodes.get(newRow, newCol)
 			j.PushNewNode(newSuccessor, currentNode, UpLeft, givenCost)
 			return
 		}
@@ -744,7 +736,7 @@ func (j *JPSPlus) SearchUpLeft(currentNode *PathfindingNode, jumpDistance int) {
 		newRow := row - jumpDistance
 		newCol := col - jumpDistance
 		givenCost := currentNode.m_givenCost + int64(SQRT_2*jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][newCol]
+		newSuccessor := j.m_mapNodes.get(newRow, newCol)
 		j.PushNewNode(newSuccessor, currentNode, UpLeft, givenCost)
 	}
 }
@@ -762,7 +754,7 @@ func (j *JPSPlus) SearchLeft(currentNode *PathfindingNode, jumpDistance int) {
 
 		if (col - absJumpDistance) <= j.m_goalCol {
 			diff := col - j.m_goalCol
-			givenCost := currentNode.m_givenCost + FIXED_POINT_SHIFT(diff)
+			givenCost := currentNode.m_givenCost + fixed_point_shift(diff)
 			newSuccessor := j.m_goalNode
 			j.PushNewNode(newSuccessor, currentNode, Left, givenCost)
 			return
@@ -772,8 +764,8 @@ func (j *JPSPlus) SearchLeft(currentNode *PathfindingNode, jumpDistance int) {
 	if jumpDistance > 0 {
 		// Directly jump
 		newCol := col - jumpDistance
-		givenCost := currentNode.m_givenCost + FIXED_POINT_SHIFT(jumpDistance)
-		newSuccessor := &j.m_mapNodes[row][newCol]
+		givenCost := currentNode.m_givenCost + fixed_point_shift(jumpDistance)
+		newSuccessor := j.m_mapNodes.get(row, newCol)
 		j.PushNewNode(newSuccessor, currentNode, Left, givenCost)
 	}
 }
@@ -800,7 +792,7 @@ func (j *JPSPlus) SearchDownLeft(currentNode *PathfindingNode, jumpDistance int)
 			newRow := row + smallerDiff
 			newCol := col - smallerDiff
 			givenCost := currentNode.m_givenCost + int64(SQRT_2*smallerDiff)
-			newSuccessor := &j.m_mapNodes[newRow][newCol]
+			newSuccessor := j.m_mapNodes.get(newRow, newCol)
 			j.PushNewNode(newSuccessor, currentNode, DownLeft, givenCost)
 			return
 		}
@@ -811,7 +803,7 @@ func (j *JPSPlus) SearchDownLeft(currentNode *PathfindingNode, jumpDistance int)
 		newRow := row + jumpDistance
 		newCol := col - jumpDistance
 		givenCost := currentNode.m_givenCost + int64(SQRT_2*jumpDistance)
-		newSuccessor := &j.m_mapNodes[newRow][newCol]
+		newSuccessor := j.m_mapNodes.get(newRow, newCol)
 		j.PushNewNode(newSuccessor, currentNode, DownLeft, givenCost)
 	}
 }
@@ -838,9 +830,9 @@ func (j *JPSPlus) PushNewNode(newSuccessor *PathfindingNode, currentNode *Pathfi
 		newSuccessor.m_iteration = j.m_currentIteration
 
 		if newSuccessor.m_finalCost <= currentNode.m_finalCost {
-			m_fastStack.Push(newSuccessor)
+			j.m_fastStack.Push(newSuccessor)
 		} else {
-			m_simpleUnsortedPriorityQueue.Add(newSuccessor)
+			j.m_simpleUnsortedPriorityQueue.Add(newSuccessor)
 		}
 	} else if givenCost < newSuccessor.m_givenCost && newSuccessor.m_listStatus == PathfindingNode_OnOpen { // Might be valid to remove this 2nd condition for extra speed (a node on the closed list wouldn't be cheaper)
 		// We found a cheaper way to this node - update node
@@ -854,5 +846,13 @@ func (j *JPSPlus) PushNewNode(newSuccessor *PathfindingNode, currentNode *Pathfi
 		newSuccessor.m_finalCost = givenCost + heuristicCost
 
 		// No decrease key operation necessary (already in unsorted open list)
+	}
+}
+
+func abs(i int) int {
+	if i < 0 {
+		return -i
+	} else {
+		return i
 	}
 }

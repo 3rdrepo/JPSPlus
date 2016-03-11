@@ -23,6 +23,7 @@ func CalculateMap() {
 
 	DefautGoalBounds.init()
 	DefautGoalBounds.CalculateGoalBounding()
+	initDefaultJumpDistancesAndGoalBounds()
 	// fmt.Printf("%#v\n", DefaultDistantJumpPoint)
 	// fmt.Println("")
 	// fmt.Printf("%#v\n", DefautGoalBounds)

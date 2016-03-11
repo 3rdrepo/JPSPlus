@@ -17,3 +17,7 @@ func newPathfindingNodeMap(width int, height int) *PathfindingNodeMap {
 	}
 	return &p
 }
+
+func (p PathfindingNodeMap) get(r int, c int) *PathfindingNode {
+	return p[r][c]
+}

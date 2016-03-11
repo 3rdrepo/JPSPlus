@@ -17,7 +17,7 @@ func initDefaultJumpDistancesAndGoalBounds() {
 	for pos := 0; pos < height; pos++ {
 		j[pos] = make([]*JumpDistancesAndGoalBounds, width)
 	}
-	DefaultJumpDistancesAndGoalBounds = j
+	DefaultJumpDistancesAndGoalBounds = &j
 	for r := 0; r < height; r++ {
 		for c := 0; c < width; c++ {
 			jmp := new(JumpDistancesAndGoalBounds)
@@ -32,6 +32,14 @@ func initDefaultJumpDistancesAndGoalBounds() {
 
 func (j JumpDistancesAndGoalBoundsMap) set(r int, c int, node *JumpDistancesAndGoalBounds) {
 	j[r][c] = node
+}
+
+func (j JumpDistancesAndGoalBoundsMap) get(r int, c int) *JumpDistancesAndGoalBounds {
+	return j[r][c]
+}
+
+func (j JumpDistancesAndGoalBoundsMap) getBlocked(r int, c int) int {
+	return j[r][c].blockedDirectionBitfield
 }
 
 func (j JumpDistancesAndGoalBoundsMap) width() int {
