@@ -16,11 +16,17 @@ const (
 	All
 )
 
-type DistantJumpPoints struct {
-	jumpDistance [8]int
+type DistantJumpPoints [8]int
+
+func (d DistantJumpPoints) get(i int) int {
+	return d[i]
 }
 
-type DistantJumpPointMap [][]DistantJumpPoints
+func (d DistantJumpPoints) set(i int, v int) {
+	d[i] = v
+}
+
+type DistantJumpPointMap [][]*DistantJumpPoints
 
 var DefaultDistantJumpPoint *DistantJumpPointMap
 
@@ -29,8 +35,11 @@ func (*DistantJumpPointMap) init() {
 		height := DefaultJumpPoint.height()
 		width := DefaultJumpPoint.width()
 		map_data := make(DistantJumpPointMap, height)
-		for pos := 0; pos < height; pos++ {
-			map_data[pos] = make([]DistantJumpPoints, width)
+		for r := 0; r < height; r++ {
+			map_data[r] = make([]*DistantJumpPoints, width)
+			for c := 0; c < width; c++ {
+				map_data[r][c] = new(DistantJumpPoints)
+			}
 		}
 		DefaultDistantJumpPoint = &map_data
 	} else {
@@ -47,71 +56,75 @@ func (d DistantJumpPointMap) height() int {
 }
 
 func (d DistantJumpPointMap) setJumpdistanceLeft(r int, c int, distance int) {
-	d[r][c].jumpDistance[Left] = distance
+	d[r][c].set(Left, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceRight(r int, c int, distance int) {
-	d[r][c].jumpDistance[Right] = distance
+	d[r][c].set(Right, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceUp(r int, c int, distance int) {
-	d[r][c].jumpDistance[Up] = distance
+	d[r][c].set(Up, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceDown(r int, c int, distance int) {
-	d[r][c].jumpDistance[Down] = distance
+	d[r][c].set(Down, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceUpLeft(r int, c int, distance int) {
-	d[r][c].jumpDistance[UpLeft] = distance
+	d[r][c].set(UpLeft, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceUpRight(r int, c int, distance int) {
-	d[r][c].jumpDistance[UpRight] = distance
+	d[r][c].set(UpRight, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceDownLeft(r int, c int, distance int) {
-	d[r][c].jumpDistance[DownLeft] = distance
+	d[r][c].set(DownLeft, distance)
 }
 
 func (d DistantJumpPointMap) setJumpdistanceDownRight(r int, c int, distance int) {
-	d[r][c].jumpDistance[DownRight] = distance
+	d[r][c].set(DownRight, distance)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceLeft(r int, c int) int {
-	return d[r][c].jumpDistance[Left]
+	return d[r][c].get(Left)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceRight(r int, c int) int {
-	return d[r][c].jumpDistance[Right]
+	return d[r][c].get(Right)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceUp(r int, c int) int {
-	return d[r][c].jumpDistance[Up]
+	return d[r][c].get(Up)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceDown(r int, c int) int {
-	return d[r][c].jumpDistance[Down]
+	return d[r][c].get(Down)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceUpLeft(r int, c int) int {
-	return d[r][c].jumpDistance[UpLeft]
+	return d[r][c].get(UpLeft)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceUpRight(r int, c int) int {
-	return d[r][c].jumpDistance[UpRight]
+	return d[r][c].get(UpRight)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceDownLeft(r int, c int) int {
-	return d[r][c].jumpDistance[DownLeft]
+	return d[r][c].get(DownLeft)
 }
 
 func (d DistantJumpPointMap) getJumpdistanceDownRight(r int, c int) int {
-	return d[r][c].jumpDistance[DownRight]
+	return d[r][c].get(DownRight)
 }
 
 func (d DistantJumpPointMap) getJumpdistance(r int, c int, dir int) int {
-	return d[r][c].jumpDistance[dir]
+	return d[r][c].get(dir)
+}
+
+func (d DistantJumpPointMap) get(r int, c int) *DistantJumpPoints {
+	return d[r][c]
 }
 
 func (d *DistantJumpPointMap) CalculateDistantJumpPointMapLeft() {

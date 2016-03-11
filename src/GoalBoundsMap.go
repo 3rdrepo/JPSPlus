@@ -11,11 +11,17 @@ const (
 	MaxCol
 )
 
-type GoalBounds struct {
-	bounds [8][4]int
+type GoalBounds [8][4]int
+
+func (g GoalBounds) set(r int, c int, v int) {
+	g[r][c] = v
 }
 
-type GoalBoundsMap [][]GoalBounds
+func (g GoalBounds) get(r int, c int) int {
+	return g[r][c]
+}
+
+type GoalBoundsMap [][]*GoalBounds
 
 var DefautGoalBounds *GoalBoundsMap
 
@@ -28,35 +34,39 @@ func (g GoalBoundsMap) height() int {
 }
 
 func (g GoalBoundsMap) getMinRow(r int, c int, dir int) int {
-	return g[r][c].bounds[dir][MinRow]
+	return g[r][c].get(dir, MinRow)
 }
 
 func (g GoalBoundsMap) getMaxRow(r int, c int, dir int) int {
-	return g[r][c].bounds[dir][MaxRow]
+	return g[r][c].get(dir, MaxRow)
 }
 
 func (g GoalBoundsMap) getMinCol(r int, c int, dir int) int {
-	return g[r][c].bounds[dir][MinCol]
+	return g[r][c].get(dir, MinCol)
 }
 
 func (g GoalBoundsMap) getMaxCol(r int, c int, dir int) int {
-	return g[r][c].bounds[dir][MaxCol]
+	return g[r][c].get(dir, MaxCol)
 }
 
 func (g GoalBoundsMap) setMinRow(r int, c int, dir int, value int) {
-	g[r][c].bounds[dir][MinRow] = value
+	g[r][c].set(dir, MinRow, value)
 }
 
 func (g GoalBoundsMap) setMaxRow(r int, c int, dir int, value int) {
-	g[r][c].bounds[dir][MaxRow] = value
+	g[r][c].set(dir, MaxRow, value)
 }
 
 func (g GoalBoundsMap) setMinCol(r int, c int, dir int, value int) {
-	g[r][c].bounds[dir][MinCol] = value
+	g[r][c].set(dir, MinCol, value)
 }
 
 func (g GoalBoundsMap) setMaxCol(r int, c int, dir int, value int) {
-	g[r][c].bounds[dir][MaxCol] = value
+	g[r][c].set(dir, MaxCol, value)
+}
+
+func (g GoalBoundsMap) get(r int, c int) *GoalBounds {
+	return g[r][c]
 }
 
 func (*GoalBoundsMap) init() {
@@ -65,10 +75,11 @@ func (*GoalBoundsMap) init() {
 		width := DefaultDistantJumpPoint.width()
 		map_data := make(GoalBoundsMap, height)
 		for pos := 0; pos < height; pos++ {
-			map_data[pos] = make([]GoalBounds, width)
+			map_data[pos] = make([]*GoalBounds, width)
 		}
 		for r := 0; r < height; r++ {
 			for c := 0; c < width; c++ {
+				map_data[r][c] = new(GoalBounds)
 				for dir := 0; dir < 8; dir++ {
 					// map_data[r][c].bounds[dir][MinRow] = height
 					// map_data[r][c].bounds[dir][MaxRow] = 0

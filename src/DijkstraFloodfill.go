@@ -20,7 +20,7 @@ type DijkstraFloodfill struct {
 	// m_map              *BoolMap
 	m_currentIteration int
 	m_fastOpenList     *BucketPriorityQueue
-	m_mapNodes         *MapNode
+	m_mapNodes         *DijkstraPathfindingNodeMap
 	// m_openList         PQueue
 }
 

@@ -16,43 +16,30 @@ type xyLocJPS struct {
 	y int
 }
 
-var DefaultJumpDistancesAndGoalBounds [][]JumpDistancesAndGoalBounds
-
 type JPSPlus struct {
-	m_width                       int
-	m_height                      int
-	m_fastStack                   *FastStack
-	m_simpleUnsortedPriorityQueue *SimpleUnsortedPriorityQueue
+	// m_width                       int
+	// m_height                      int
 	// m_jumpDistancesAndGoalBounds  [][]JumpDistancesAndGoalBounds
-	m_mapNodes         [][]PathfindingNode
-	m_currentIteration int
-	m_goalNode         *PathfindingNode
-	m_goalRow          int
-	m_goalCol          int
+	m_simpleUnsortedPriorityQueue *SimpleUnsortedPriorityQueue
+	m_fastStack                   *FastStack
+	m_mapNodes                    *PathfindingNodeMap
+	m_currentIteration            int
+	m_goalNode                    *PathfindingNode
+	m_goalRow                     int
+	m_goalCol                     int
 }
 
-func newJPSPlus(jumpDistancesAndGoalBoundsMap []*JumpDistancesAndGoalBounds, rawMap []bool, w int, h int) *JPSPlus {
+func newJPSPlus() *JPSPlus {
+	width := DefaultJumpDistancesAndGoalBounds.width()
+	height := DefaultJumpDistancesAndGoalBounds.height()
+
 	j := new(JPSPlus)
-	j.m_width = w
-	j.m_height = h
+	j.m_currentIteration = 1
+
 	j.m_simpleUnsortedPriorityQueue = newSimpleUnsortedPriorityQueue(10000)
 	j.m_fastStack = newFastStack(1000)
-	j.m_jumpDistancesAndGoalBounds = jumpDistancesAndGoalBoundsMap
-	j.m_currentIteration = 1
-	j.m_mapNodes = make([]([]PathfindingNode), h)
-	for pos := 0; pos < h; pos++ {
-		j.m_mapNodes[pos] = make([]PathfindingNode, w)
-	}
-	for r := 0; r < h; r++ {
-		for c := 0; c < w; c++ {
-			node := &j.m_mapNodes[r][c]
-			node.m_row = r
-			node.m_col = c
-			node.m_listStatus = PathfindingNode_OnNone
-			node.m_iteration = 0
-		}
-	}
-	jpsPlus = j
+	j.m_mapNodes = newPathfindingNodeMap(width, height)
+
 	return j
 }
 
