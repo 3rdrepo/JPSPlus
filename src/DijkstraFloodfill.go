@@ -1,7 +1,7 @@
 package jpsplus
 
 import (
-	"fmt"
+// "fmt"
 )
 
 const (
@@ -15,35 +15,31 @@ const (
 )
 
 type DijkstraFloodfill struct {
-	m_width            int
-	m_height           int
-	m_map              []bool
+	// m_width  int
+	// m_height int
+	// m_map              *BoolMap
 	m_currentIteration int
 	m_fastOpenList     *BucketPriorityQueue
-	m_mapNodes         [][]DijkstraPathfindingNode
+	m_mapNodes         *MapNode
 	// m_openList         PQueue
 }
 
-var Dijkstra *DijkstraFloodfill
+var DefaultDijkstra = new(DijkstraFloodfill)
 
-func fixed_point_shift(x int) int {
-	return x * FIXED_POINT_MULTIPLIER
+func fixed_point_shift(x int) int64 {
+	return int64(x) * int64(FIXED_POINT_MULTIPLIER)
 }
 
-func newDijkstraFloodfill(width int, height int, mAp []bool, distantJumpPointMap [][]DistantJumpPoints) *DijkstraFloodfill {
-	d := new(DijkstraFloodfill)
-	d.m_width = width
-	d.m_height = height
-	d.m_map = mAp
+func (d *DijkstraFloodfill) init() {
+	width := DefaultDistantJumpPoint.width()
+	height := DefaultDistantJumpPoint.height()
 	d.m_fastOpenList = newBucketPriorityQueue(numberOfBuckets, nodesInEachBucket, division)
-	d.m_mapNodes = make([]([]DijkstraPathfindingNode), height)
+	d.m_mapNodes = newMapNode(width, height)
 	// Initialize nodes
-	for pos := 0; pos < height; pos++ {
-		d.m_mapNodes[pos] = make([]DijkstraPathfindingNode, width)
-	}
-	for r := 0; r < d.m_height; r++ {
-		for c := 0; c < d.m_width; c++ {
-			node := DijkstraPathfindingNode{
+
+	for r := 0; r < height; r++ {
+		for c := 0; c < width; c++ {
+			node := &DijkstraPathfindingNode{
 				m_row:                      r,
 				m_col:                      c,
 				m_iteration:                0,
@@ -54,15 +50,14 @@ func newDijkstraFloodfill(width int, height int, mAp []bool, distantJumpPointMap
 			for i = 0; i < 8; i++ {
 				// Detect invalid movement from jump distances
 				// (jump distance of zero is invalid movement)
-				if distantJumpPointMap[r][c].jumpDistance[i] == 0 {
+
+				if DefaultDistantJumpPoint.getJumpdistance(r, c, int(i)) == 0 {
 					node.m_blockedDirectionBitfield |= (1 << i)
 				}
 			}
-			d.m_mapNodes[r][c] = node
+			d.m_mapNodes.insert(r, c, node)
 		}
 	}
-	Dijkstra = d
-	return d
 }
 
 func (d *DijkstraFloodfill) Flood(r int, c int) {
@@ -71,7 +66,7 @@ func (d *DijkstraFloodfill) Flood(r int, c int) {
 
 	if d.IsEmpty(r, c) {
 		// Begin with starting node
-		node := &d.m_mapNodes[r][c]
+		node := d.m_mapNodes.node(r, c)
 		node.m_parent = nil
 		node.m_directionFromStart = 255
 		node.m_directionFromParent = 255
@@ -85,9 +80,9 @@ func (d *DijkstraFloodfill) Flood(r int, c int) {
 	}
 
 	for !d.m_fastOpenList.Empty() {
-		fmt.Printf("m_fastOpenList %#v\n", d.m_fastOpenList.m_numNodesTracked)
+		// fmt.Printf("m_fastOpenList %#v\n", d.m_fastOpenList.m_numNodesTracked)
 		currentNode := d.m_fastOpenList.Pop()
-		fmt.Printf("fun %#v\n", exploreDirectionsDijkstraFlood[(currentNode.m_blockedDirectionBitfield*8)+currentNode.m_directionFromParent])
+		// fmt.Printf("fun %#v\n", exploreDirectionsDijkstraFlood[(currentNode.m_blockedDirectionBitfield*8)+currentNode.m_directionFromParent])
 		exploreDirectionsDijkstraFlood[(currentNode.m_blockedDirectionBitfield*8)+currentNode.m_directionFromParent](currentNode)
 
 		currentNode.m_listStatus = PathfindingNode_OnClosed
@@ -101,25 +96,26 @@ func (d *DijkstraFloodfill) Explore_AllDirectionsWithChecks(currentNode *Dijkstr
 	//DOWN, DOWNRIGHT, RIGHT, UPRIGHT, UP, UPLEFT, LEFT, DOWNLEFT
 	offsetRow := []int{1, 1, 0, -1, -1, -1, 0, 1}
 	offsetCol := []int{0, 1, 1, 1, 0, -1, -1, -1}
+	width := d.m_mapNodes.width()
+	height := d.m_mapNodes.height()
 	for i := 0; i < 8; i++ {
 		neighborRow := currentNode.m_row + offsetRow[i]
 
 		// Out of grid bounds?
-		if (neighborRow >= 0) && (neighborRow < d.m_height) {
+		if (neighborRow >= 0) && (neighborRow < height) {
 			neighborCol := currentNode.m_col + offsetCol[i]
 
 			// Out of grid bounds?
-			if (neighborCol >= 0) && (neighborCol < d.m_width) {
+			if (neighborCol >= 0) && (neighborCol < width) {
 				// Valid tile - get the node
 				// fmt.Printf("neighborRow = %v, neighborCol = %v\n", neighborRow, neighborCol)
-				newSuccessor := &d.m_mapNodes[neighborRow][neighborCol]
-
+				newSuccessor := d.m_mapNodes.node(neighborRow, neighborCol)
 				// Blocked?
-				if d.m_map[neighborCol+(neighborRow*d.m_width)] {
+				if IsEmpty(neighborRow, neighborCol) {
 					// Diagonal blocked?
 					isDiagonal := (i & 0x1) == 1
-					if isDiagonal && (!d.m_map[currentNode.m_col+((currentNode.m_row+offsetRow[i])*d.m_width)] ||
-						!d.m_map[currentNode.m_col+offsetCol[i]+(currentNode.m_row*d.m_width)]) {
+					if isDiagonal && (!IsEmpty(currentNode.m_row+offsetRow[i], currentNode.m_col) ||
+						!IsEmpty(currentNode.m_row, currentNode.m_col+offsetCol[i])) {
 						continue
 					}
 					var costToNextNode int64
@@ -162,19 +158,7 @@ func (d *DijkstraFloodfill) PushNewNode(newSuccessor *DijkstraPathfindingNode, c
 }
 
 func (d DijkstraFloodfill) IsEmpty(r int, c int) bool {
-	if r < 0 {
-		return false
-	} else {
-		if c < 0 {
-			return false
-		} else {
-			if c < d.m_width && r < d.m_height {
-				return d.m_map[c+(r*d.m_width)]
-			} else {
-				return false
-			}
-		}
-	}
+	return IsEmpty(r, c)
 }
 
 func Explore_Null(currentNode *DijkstraPathfindingNode) {
@@ -182,295 +166,295 @@ func Explore_Null(currentNode *DijkstraPathfindingNode) {
 }
 
 func Explore_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_DR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
 }
 
 func Explore_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_UR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
 }
 
 func Explore_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_UL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
 }
 
 func Explore_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_DL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
 }
 
 // Adjacent Doubles
 
 func Explore_D_DR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
 }
 
 func Explore_DR_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_R_UR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
 }
 
 func Explore_UR_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_U_UL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
 }
 
 func Explore_UL_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_L_DL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
 }
 
 func Explore_DL_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 // Non-Adjacent Cardinal Doubles
 
 func Explore_D_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_R_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_U_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_L_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_D_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_R_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 // Adjacent Triples
 
 func Explore_D_DR_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_DR_R_UR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
 }
 
 func Explore_R_UR_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_UR_U_UL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
 }
 
 func Explore_U_UL_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_UL_L_DL(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
 }
 
 func Explore_L_DL_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_DL_D_DR(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
 }
 
 // Non-Adjacent Cardinal Triples
 
 func Explore_D_R_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_R_U_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_U_L_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_L_D_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 // Quads
 
 func Explore_R_DR_D_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_R_D_DL_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_U_UR_R_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_U_R_DR_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_L_UL_U_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_L_U_UR_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_D_DL_L_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_D_L_UL_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 // Quints
 
 func Explore_R_DR_D_DL_L(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
 }
 
 func Explore_U_UR_R_DR_D(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
-	Dijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
 }
 
 func Explore_L_UL_U_UR_R(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
 }
 
 func Explore_D_DL_L_UL_U(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
 }
 
 func Explore_AllDirections(currentNode *DijkstraPathfindingNode) {
-	Dijkstra.SearchDown(currentNode)
-	Dijkstra.SearchDownLeft(currentNode)
-	Dijkstra.SearchLeft(currentNode)
-	Dijkstra.SearchUpLeft(currentNode)
-	Dijkstra.SearchUp(currentNode)
-	Dijkstra.SearchUpRight(currentNode)
-	Dijkstra.SearchRight(currentNode)
-	Dijkstra.SearchDownRight(currentNode)
+	DefaultDijkstra.SearchDown(currentNode)
+	DefaultDijkstra.SearchDownLeft(currentNode)
+	DefaultDijkstra.SearchLeft(currentNode)
+	DefaultDijkstra.SearchUpLeft(currentNode)
+	DefaultDijkstra.SearchUp(currentNode)
+	DefaultDijkstra.SearchUpRight(currentNode)
+	DefaultDijkstra.SearchRight(currentNode)
+	DefaultDijkstra.SearchDownRight(currentNode)
 }
 
 func (d *DijkstraFloodfill) SearchDown(currentNode *DijkstraPathfindingNode) {
 	newRow := currentNode.m_row + 1
 	newCol := currentNode.m_col
 	givenCost := currentNode.m_givenCost + FIXED_POINT_ONE
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, Down, givenCost)
 }
 
@@ -478,7 +462,7 @@ func (d *DijkstraFloodfill) SearchDownRight(currentNode *DijkstraPathfindingNode
 	newRow := currentNode.m_row + 1
 	newCol := currentNode.m_col + 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_SQRT_2
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, DownRight, givenCost)
 }
 
@@ -486,7 +470,7 @@ func (d *DijkstraFloodfill) SearchRight(currentNode *DijkstraPathfindingNode) {
 	newRow := currentNode.m_row
 	newCol := currentNode.m_col + 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_ONE
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, Right, givenCost)
 }
 
@@ -494,7 +478,7 @@ func (d *DijkstraFloodfill) SearchUpRight(currentNode *DijkstraPathfindingNode) 
 	newRow := currentNode.m_row - 1
 	newCol := currentNode.m_col + 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_SQRT_2
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, UpRight, givenCost)
 }
 
@@ -502,7 +486,7 @@ func (d *DijkstraFloodfill) SearchUp(currentNode *DijkstraPathfindingNode) {
 	newRow := currentNode.m_row - 1
 	newCol := currentNode.m_col
 	givenCost := currentNode.m_givenCost + FIXED_POINT_ONE
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, Up, givenCost)
 }
 
@@ -510,7 +494,7 @@ func (d *DijkstraFloodfill) SearchUpLeft(currentNode *DijkstraPathfindingNode) {
 	newRow := currentNode.m_row - 1
 	newCol := currentNode.m_col - 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_SQRT_2
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, UpLeft, givenCost)
 }
 
@@ -518,7 +502,7 @@ func (d *DijkstraFloodfill) SearchLeft(currentNode *DijkstraPathfindingNode) {
 	newRow := currentNode.m_row
 	newCol := currentNode.m_col - 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_ONE
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, Left, givenCost)
 }
 
@@ -526,6 +510,6 @@ func (d *DijkstraFloodfill) SearchDownLeft(currentNode *DijkstraPathfindingNode)
 	newRow := currentNode.m_row + 1
 	newCol := currentNode.m_col - 1
 	givenCost := currentNode.m_givenCost + FIXED_POINT_SQRT_2
-	newSuccessor := &d.m_mapNodes[newRow][newCol]
+	newSuccessor := d.m_mapNodes.node(newRow, newCol)
 	d.PushNewNode(newSuccessor, currentNode, currentNode.m_directionFromStart, DownLeft, givenCost)
 }

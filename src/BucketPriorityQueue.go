@@ -1,7 +1,7 @@
 package jpsplus
 
 import (
-	"fmt"
+// "fmt"
 )
 
 type BucketPriorityQueue struct {
@@ -46,8 +46,8 @@ func (b BucketPriorityQueue) GetBinIndex(cost int64) int {
 func (b *BucketPriorityQueue) Pop() *DijkstraPathfindingNode {
 	node := b.m_bin[b.m_lowestNonEmptyBin].Pop()
 	b.m_numNodesTracked -= 1
-	fmt.Printf("node %#v\n", node)
-	fmt.Printf("b.m_lowestNonEmptyBin %v\n", b.m_lowestNonEmptyBin)
+	// fmt.Printf("node %#v\n", node)
+	// fmt.Printf("b.m_lowestNonEmptyBin %v\n", b.m_lowestNonEmptyBin)
 	// fmt.Printf("b.m_bin[b.m_lowestNonEmptyBin] %#v\n", b.m_bin[b.m_lowestNonEmptyBin])
 
 	if b.m_bin[b.m_lowestNonEmptyBin].Empty(node.m_iteration) {
@@ -75,8 +75,8 @@ func (b *BucketPriorityQueue) Push(node *DijkstraPathfindingNode) {
 	b.m_numNodesTracked += 1
 	index := b.GetBinIndex(node.m_givenCost)
 	if nil == b.m_bin[index] {
-		b.m_nextFreeBucket += 1
 		b.m_bin[index] = b.m_freeBuckets[b.m_nextFreeBucket]
+		b.m_nextFreeBucket += 1
 	}
 	b.m_bin[index].Push(node)
 	if index < b.m_lowestNonEmptyBin {
@@ -99,8 +99,8 @@ func (b *BucketPriorityQueue) DecreaseKey(node *DijkstraPathfindingNode, lastCos
 	index = b.GetBinIndex(node.m_givenCost)
 
 	if b.m_bin[index] == nil {
-		b.m_nextFreeBucket += 1
 		b.m_bin[index] = b.m_freeBuckets[b.m_nextFreeBucket]
+		b.m_nextFreeBucket += 1
 	}
 
 	b.m_bin[index].Push(node)

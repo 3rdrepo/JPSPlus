@@ -19,33 +19,39 @@ func openImage(filename string) image.Image {
 	return img
 }
 
-func parseImage(img image.Image) []bool {
+func parseImage(img image.Image) {
 	max := uint32(65536 - 1) // 2^16-1
 
 	bounds := img.Bounds()
-	map_data := make([]bool, bounds.Max.X*bounds.Max.Y)
+	DefaultBoolMap.init(bounds.Max.Y, bounds.Max.X)
 	// fmt.Printf("map_data = %v\n", map_data)
-	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
-		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+	for y := 0; y < bounds.Max.Y; y++ {
+		for x := 0; x < bounds.Max.X; x++ {
 			r, g, b, a := img.At(x, y).RGBA()
 
 			if r == max && g == max && b == max && a == max {
-				map_data[x+bounds.Max.Y*y] = true
+				// fmt.Println(DefaultBoolMap)
+				DefaultBoolMap.insertTrue(y, x)
 				//fmt.Printf(".")
 			} else {
-				map_data[x+bounds.Max.Y*y] = false
+				DefaultBoolMap.insertFalse(y, x)
+				// map_data[y][x] = false
 				//fmt.Printf("#")
 			}
 		}
 		//fmt.Println("")
 	}
-	return map_data
 }
 
-func GetMapFromImage(filename string) ([]bool, int, int) {
+func GetMapFromImage(filename string) bool {
 	img := openImage(filename)
-	if img == nil {
-		return []bool{}, 0, 0
+	if nil == img {
+		return false
 	}
-	return parseImage(img), img.Bounds().Max.X, img.Bounds().Max.Y
+	parseImage(img)
+	if nil == DefaultBoolMap {
+		return false
+	} else {
+		return true
+	}
 }

@@ -1,7 +1,7 @@
 package jpsplus
 
 import (
-	"fmt"
+// "fmt"
 )
 
 type UnsortedPriorityQueue struct {
@@ -18,7 +18,7 @@ func newUnsortedPriorityQueue(arraySize int) *UnsortedPriorityQueue {
 }
 
 func (u UnsortedPriorityQueue) Empty(iteration int) bool {
-	fmt.Printf("11111111111111  %v   %v\n", u.m_iteration, iteration)
+	// fmt.Printf("11111111111111  %v   %v\n", u.m_iteration, iteration)
 	if u.m_iteration == iteration {
 		return 0 == u.m_nextFreeNode
 	} else {
@@ -37,8 +37,9 @@ func (u *UnsortedPriorityQueue) Push(node *DijkstraPathfindingNode) {
 		u.m_identical = true
 		u.m_iteration = node.m_iteration
 	}
-	u.m_nextFreeNode += 1
 	u.m_nodeArray[u.m_nextFreeNode] = node
+	u.m_nextFreeNode += 1
+
 }
 
 func (u *UnsortedPriorityQueue) Remove(node *DijkstraPathfindingNode) {
@@ -55,7 +56,7 @@ func (u *UnsortedPriorityQueue) Remove(node *DijkstraPathfindingNode) {
 func (u *UnsortedPriorityQueue) Pop() *DijkstraPathfindingNode {
 	// Find cheapest node
 	// fmt.Printf("1111 %#v\n", u.m_nextFreeNode)
-	cheapestNodeCostFinal := u.m_nodeArray[1].m_givenCost
+	cheapestNodeCostFinal := u.m_nodeArray[0].m_givenCost
 	cheapestNodeIndex := 0
 
 	for i := 1; i < u.m_nextFreeNode; i++ {

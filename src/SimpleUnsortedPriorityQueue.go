@@ -9,6 +9,7 @@ type SimpleUnsortedPriorityQueue struct {
 func newSimpleUnsortedPriorityQueue(arraySize int) *SimpleUnsortedPriorityQueue {
 	s := new(SimpleUnsortedPriorityQueue)
 	s.m_nodeArray = make([]*PathfindingNode, arraySize)
+	return s
 }
 
 func (s *SimpleUnsortedPriorityQueue) Reset() {
@@ -36,7 +37,7 @@ func (s *SimpleUnsortedPriorityQueue) Pop() *PathfindingNode {
 	}
 
 	// Remember the cheapest node
-	PathfindingNode * cheapestNode = m_nodeArray[cheapestNodeIndex]
+	cheapestNode := s.m_nodeArray[cheapestNodeIndex]
 
 	// Delete off list (put the last node where this one was)
 	s.m_nextFreeNode -= 1
