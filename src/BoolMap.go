@@ -4,10 +4,10 @@ type BoolMap [][]bool
 
 var DefaultBoolMap *BoolMap
 
-func (*BoolMap) init(width int, height int) {
-	map_data := make(BoolMap, height)
-	for pos := 0; pos < height; pos++ {
-		map_data[pos] = make([]bool, width)
+func (*BoolMap) init(row int, col int) {
+	map_data := make(BoolMap, row)
+	for pos := 0; pos < row; pos++ {
+		map_data[pos] = make([]bool, col)
 	}
 	DefaultBoolMap = &map_data
 }

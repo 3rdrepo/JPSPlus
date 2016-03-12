@@ -24,13 +24,14 @@ func parseImage(img image.Image) {
 
 	bounds := img.Bounds()
 	DefaultBoolMap.init(bounds.Max.Y, bounds.Max.X)
-	// fmt.Printf("map_data = %v\n", map_data)
+	// fmt.Printf("bool map w %v h %v\n", DefaultBoolMap.width(), DefaultBoolMap.height())
+	// fmt.Printf("map_data = %#v\n", bounds)
 	for y := 0; y < bounds.Max.Y; y++ {
 		for x := 0; x < bounds.Max.X; x++ {
 			r, g, b, a := img.At(x, y).RGBA()
 
 			if r == max && g == max && b == max && a == max {
-				// fmt.Println(DefaultBoolMap)
+				// fmt.Println(y, x)
 				DefaultBoolMap.insertTrue(y, x)
 				//fmt.Printf(".")
 			} else {
