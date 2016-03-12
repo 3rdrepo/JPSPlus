@@ -9,6 +9,7 @@ import (
 import _ "image/png"
 
 func openImage(filename string) image.Image {
+	fmt.Println(filename)
 	f, err := os.Open(filename)
 	if err != nil {
 		fmt.Printf("err = %v\n", err.Error())

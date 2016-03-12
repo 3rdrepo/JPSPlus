@@ -115,7 +115,6 @@ func (*GoalBoundsMap) init() {
 }
 
 func (g *GoalBoundsMap) CalculateGoalBounding() {
-	fmt.Printf("Goal Bounding Preprocessing\n")
 
 	DefaultDijkstra.init()
 

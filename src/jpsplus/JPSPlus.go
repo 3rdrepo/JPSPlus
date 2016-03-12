@@ -15,9 +15,9 @@ const (
 	SQRT_2_MINUS_ONE = 985
 )
 
-type xyLocJPS struct {
-	x int
-	y int
+type LocJPS struct {
+	X int
+	Y int
 }
 
 type JPSPlus struct {
@@ -33,7 +33,7 @@ type JPSPlus struct {
 	m_goalCol                     int
 }
 
-func newJPSPlus() *JPSPlus {
+func NewJPSPlus() *JPSPlus {
 	width := DefaultJumpDistancesAndGoalBounds.width()
 	height := DefaultJumpDistancesAndGoalBounds.height()
 
@@ -47,12 +47,12 @@ func newJPSPlus() *JPSPlus {
 	return j
 }
 
-func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
+func (j *JPSPlus) GetPath(s LocJPS, g LocJPS) ([]LocJPS, bool) {
 	fmt.Println("GetPath")
-	startRow := s.y
-	startCol := s.x
-	j.m_goalRow = g.y
-	j.m_goalCol = g.x
+	startRow := s.Y
+	startCol := s.X
+	j.m_goalRow = g.Y
+	j.m_goalCol = g.X
 
 	// Initialize map
 	j.m_goalNode = j.m_mapNodes.get(j.m_goalRow, j.m_goalCol)
@@ -80,7 +80,7 @@ func (j *JPSPlus) GetPath(s xyLocJPS, g xyLocJPS) ([]xyLocJPS, bool) {
 		return path, true
 	} else {
 		// No path
-		return []xyLocJPS{}, false
+		return []LocJPS{}, false
 	}
 }
 
@@ -122,13 +122,13 @@ func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
 	return NoPathExists
 }
 
-func (j *JPSPlus) FinalizePath() []xyLocJPS {
+func (j *JPSPlus) FinalizePath() []LocJPS {
 	var prevNode *PathfindingNode
 	curNode := j.m_goalNode
-	finalPath := make([]xyLocJPS, 0, 100)
+	finalPath := make([]LocJPS, 0, 100)
 
 	for nil != curNode {
-		loc := xyLocJPS{curNode.m_col, curNode.m_row}
+		loc := LocJPS{curNode.m_col, curNode.m_row}
 
 		if prevNode != nil {
 			// Insert extra nodes if needed (may not be neccessary depending on final path use)
@@ -163,7 +163,7 @@ func (j *JPSPlus) FinalizePath() []xyLocJPS {
 				x += xInc
 				y += yInc
 
-				locNew := xyLocJPS{x, y}
+				locNew := LocJPS{x, y}
 				finalPath = append(finalPath, locNew)
 			}
 		}
@@ -176,7 +176,7 @@ func (j *JPSPlus) FinalizePath() []xyLocJPS {
 	return reverse(finalPath)
 }
 
-func reverse(path []xyLocJPS) []xyLocJPS {
+func reverse(path []LocJPS) []LocJPS {
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
