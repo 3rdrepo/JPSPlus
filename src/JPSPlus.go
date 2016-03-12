@@ -96,8 +96,8 @@ func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
 
 	JPSPlusExplore_AllDirections(startNode, jump, j)
 	startNode.m_listStatus = PathfindingNode_OnClosed
-	fmt.Println(!j.m_simpleUnsortedPriorityQueue.Empty())
-	fmt.Println(!j.m_fastStack.Empty())
+	// fmt.Println(!j.m_simpleUnsortedPriorityQueue.Empty())
+	// fmt.Println(!j.m_fastStack.Empty())
 
 	for !j.m_simpleUnsortedPriorityQueue.Empty() || !j.m_fastStack.Empty() {
 		var currentNode *PathfindingNode
@@ -184,76 +184,98 @@ func reverse(path []xyLocJPS) []xyLocJPS {
 }
 
 func MacroExploreDown(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[Down][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[Down][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[Down][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[Down][MaxCol] {
-		jpsPlus.SearchDown(currentNode, jump.jumpDistance.get(Down))
-	}
+	jpsPlus.SearchDown(currentNode, jump.jumpDistance.get(Down))
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(Down, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(Down, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(Down, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(Down, MaxCol) {
+	// 	jpsPlus.SearchDown(currentNode, jump.jumpDistance.get(Down))
+	// }
 }
 
 func MacroExploreDownRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[DownRight][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[DownRight][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[DownRight][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[DownRight][MaxCol] {
-		jpsPlus.SearchDownRight(currentNode, jump.jumpDistance.get(DownRight))
-	}
+	// if jpsPlus.m_goalRow >= jump.bounds.get(DownRight, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(DownRight, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(DownRight, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(DownRight, MaxCol) {
+	// 	jpsPlus.SearchDownRight(currentNode, jump.jumpDistance.get(DownRight))
+	// }
+	jpsPlus.SearchDownRight(currentNode, jump.jumpDistance.get(DownRight))
 
 }
 
 func MacroExploreRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[Right][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[Right][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[Right][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[Right][MaxCol] {
-		jpsPlus.SearchRight(currentNode, jump.jumpDistance.get(Right))
-	}
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(Right, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(Right, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(Right, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(Right, MaxCol) {
+	// 	jpsPlus.SearchRight(currentNode, jump.jumpDistance.get(Right))
+	// }
+	jpsPlus.SearchRight(currentNode, jump.jumpDistance.get(Right))
+
 }
 
 func MacroExploreUpRight(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[UpRight][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[UpRight][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[UpRight][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[UpRight][MaxCol] {
-		jpsPlus.SearchUpRight(currentNode, jump.jumpDistance.get(UpRight))
-	}
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(UpRight, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(UpRight, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(UpRight, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(UpRight, MaxCol) {
+	// 	jpsPlus.SearchUpRight(currentNode, jump.jumpDistance.get(UpRight))
+	// }
+	jpsPlus.SearchUpRight(currentNode, jump.jumpDistance.get(UpRight))
+
 }
 
 func MacroExploreUp(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[Up][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[Up][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[Up][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[Up][MaxCol] {
-		jpsPlus.SearchUp(currentNode, jump.jumpDistance.get(Up))
-	}
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(Up, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(Up, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(Up, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(Up, MaxCol) {
+	// 	jpsPlus.SearchUp(currentNode, jump.jumpDistance.get(Up))
+	// }
+	jpsPlus.SearchUp(currentNode, jump.jumpDistance.get(Up))
+
 }
 
 func MacroExploreUpLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[UpLeft][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[UpLeft][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[UpLeft][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[UpLeft][MaxCol] {
-		jpsPlus.SearchUpLeft(currentNode, jump.jumpDistance.get(UpLeft))
-	}
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(UpLeft, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(UpLeft, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(UpLeft, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(UpLeft, MaxCol) {
+	// 	jpsPlus.SearchUpLeft(currentNode, jump.jumpDistance.get(UpLeft))
+	// }
+	jpsPlus.SearchUpLeft(currentNode, jump.jumpDistance.get(UpLeft))
+
 }
 
 func MacroExploreLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[Left][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[Left][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[Left][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[Left][MaxCol] {
-		jpsPlus.SearchLeft(currentNode, jump.jumpDistance.get(Left))
-	}
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(Left, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(Left, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(Left, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(Left, MaxCol) {
+	// 	jpsPlus.SearchLeft(currentNode, jump.jumpDistance.get(Left))
+	// }
+	jpsPlus.SearchLeft(currentNode, jump.jumpDistance.get(Left))
+
 }
 
 func MacroExploreDownLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	if jpsPlus.m_goalRow >= jump.bounds[DownLeft][MinRow] &&
-		jpsPlus.m_goalRow <= jump.bounds[DownLeft][MaxRow] &&
-		jpsPlus.m_goalCol >= jump.bounds[DownLeft][MinCol] &&
-		jpsPlus.m_goalCol <= jump.bounds[DownLeft][MaxCol] {
-		jpsPlus.SearchDownLeft(currentNode, jump.jumpDistance.get(DownLeft))
-	}
+	// fmt.Println("MacroExploreDownLeft")
+
+	// if jpsPlus.m_goalRow >= jump.bounds.get(DownLeft, MinRow) &&
+	// 	jpsPlus.m_goalRow <= jump.bounds.get(DownLeft, MaxRow) &&
+	// 	jpsPlus.m_goalCol >= jump.bounds.get(DownLeft, MinCol) &&
+	// 	jpsPlus.m_goalCol <= jump.bounds.get(DownLeft, MaxCol) {
+	// 	jpsPlus.SearchDownLeft(currentNode, jump.jumpDistance.get(DownLeft))
+	// }
+	jpsPlus.SearchDownLeft(currentNode, jump.jumpDistance.get(DownLeft))
+
 }
 
 func JPSPlusExplore_Null(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jps *JPSPlus) {

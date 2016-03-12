@@ -53,8 +53,12 @@ func (j JumpPointMap) movingLeft(r int, c int) {
 	j[r][c] |= MovingLeft
 }
 
-func (j JumpPointMap) node(r int, c int) int {
+func (j JumpPointMap) get(r int, c int) int {
 	return j[r][c]
+}
+
+func (j JumpPointMap) set(r int, c int, v int) {
+	j[r][c] = v
 }
 
 func (j *JumpPointMap) CalculateJumpPointMap() {

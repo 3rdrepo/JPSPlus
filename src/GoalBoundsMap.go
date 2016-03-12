@@ -11,7 +11,20 @@ const (
 	MaxCol
 )
 
-type GoalBounds [8][4]int
+const (
+	MaxGoalBoundsRow = 8
+	MaxGoalBoundsCol = 4
+)
+
+type GoalBounds [][]int
+
+func newGoalBounds() *GoalBounds {
+	g := make(GoalBounds, MaxGoalBoundsRow)
+	for i := 0; i < MaxGoalBoundsRow; i++ {
+		g[i] = make([]int, MaxGoalBoundsCol)
+	}
+	return &g
+}
 
 func (g GoalBounds) set(r int, c int, v int) {
 	g[r][c] = v
@@ -77,20 +90,25 @@ func (*GoalBoundsMap) init() {
 		for pos := 0; pos < height; pos++ {
 			map_data[pos] = make([]*GoalBounds, width)
 		}
+		DefautGoalBounds = &map_data
+
 		for r := 0; r < height; r++ {
 			for c := 0; c < width; c++ {
-				map_data[r][c] = new(GoalBounds)
+				g := newGoalBounds()
 				for dir := 0; dir < 8; dir++ {
 					// map_data[r][c].bounds[dir][MinRow] = height
 					// map_data[r][c].bounds[dir][MaxRow] = 0
 					// map_data[r][c].bounds[dir][MinCol] = width
 					// map_data[r][c].bounds[dir][MaxCol] = 0
-					map_data.setMinRow(r, c, dir, height)
-					map_data.setMinCol(r, c, dir, width)
+					// map_data.setMinRow(r, c, dir, height)
+					// map_data.setMinCol(r, c, dir, width)
+					g.set(dir, MinRow, height)
+					g.set(dir, MinCol, width)
 				}
+				map_data[r][c] = g
+				// fmt.Printf("new GoalBounds %#v\n", *g)
 			}
 		}
-		DefautGoalBounds = &map_data
 	} else {
 		fmt.Println("init DefautGoalBounds faild : not DistantJumpPointMap")
 	}

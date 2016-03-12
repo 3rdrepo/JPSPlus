@@ -16,7 +16,16 @@ const (
 	All
 )
 
-type DistantJumpPoints [8]int
+const (
+	DistantJumpPointsRow = 8
+)
+
+type DistantJumpPoints []int
+
+func newDistantJumpPoints() *DistantJumpPoints {
+	d := make(DistantJumpPoints, DistantJumpPointsRow)
+	return &d
+}
 
 func (d DistantJumpPoints) get(i int) int {
 	return d[i]
@@ -38,7 +47,8 @@ func (*DistantJumpPointMap) init() {
 		for r := 0; r < height; r++ {
 			map_data[r] = make([]*DistantJumpPoints, width)
 			for c := 0; c < width; c++ {
-				map_data[r][c] = new(DistantJumpPoints)
+				// map_data[r][c] = new(DistantJumpPoints)
+				map_data[r][c] = newDistantJumpPoints()
 			}
 		}
 		DefaultDistantJumpPoint = &map_data
@@ -148,7 +158,7 @@ func (d *DistantJumpPointMap) CalculateDistantJumpPointMapLeft() {
 					// Wall last seen
 					d.setJumpdistanceLeft(r, c, -countMovingLeft)
 				}
-				if (DefaultJumpPoint.node(r, c) & MovingLeft) > 0 {
+				if (DefaultJumpPoint.get(r, c) & MovingLeft) > 0 {
 					countMovingLeft = 0
 					jumpPointLastSeen = true
 				}
@@ -178,7 +188,7 @@ func (d *DistantJumpPointMap) CalculateDistantJumpPointMapRight() {
 					// Wall last see
 					d.setJumpdistanceRight(r, c, -countMovingRight)
 				}
-				if (DefaultJumpPoint.node(r, c) & MovingRight) > 0 {
+				if (DefaultJumpPoint.get(r, c) & MovingRight) > 0 {
 					countMovingRight = 0
 					jumpPointLastSeen = true
 				}
@@ -208,7 +218,7 @@ func (d *DistantJumpPointMap) CalculateDistantJumpPointMapUp() {
 				} else { // Wall last seen
 					d.setJumpdistanceUp(r, c, -countMovingUp)
 				}
-				if (DefaultJumpPoint.node(r, c) & MovingUp) > 0 {
+				if (DefaultJumpPoint.get(r, c) & MovingUp) > 0 {
 					countMovingUp = 0
 					jumpPointLastSeen = true
 				}
@@ -237,7 +247,7 @@ func (d *DistantJumpPointMap) CalculateDistantJumpPointMapDown() {
 				} else { // Wall last seen
 					d.setJumpdistanceDown(r, c, -countMovingDown)
 				}
-				if (DefaultJumpPoint.node(r, c) & MovingDown) > 0 {
+				if (DefaultJumpPoint.get(r, c) & MovingDown) > 0 {
 					countMovingDown = 0
 					jumpPointLastSeen = true
 				}
