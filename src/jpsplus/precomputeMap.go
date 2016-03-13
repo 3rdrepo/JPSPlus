@@ -46,12 +46,12 @@ func CalculateMap() {
 	tde := time.Now().UnixNano()
 	PrintTime("DistantJumpPoint", tds, tde)
 
-	fmt.Printf("GoalBounding Preprocessing\n")
-	tgs := time.Now().UnixNano()
-	DefautGoalBounds.init()
-	DefautGoalBounds.CalculateGoalBounding()
-	tge := time.Now().UnixNano()
-	PrintTime("GoalBounding", tgs, tge)
+	// fmt.Printf("GoalBounding Preprocessing\n")
+	// tgs := time.Now().UnixNano()
+	// DefautGoalBounds.init()
+	// DefautGoalBounds.CalculateGoalBounding()
+	// tge := time.Now().UnixNano()
+	// PrintTime("GoalBounding", tgs, tge)
 
 	fmt.Printf("JumpDistancesAndGoalBounds Preprocessing\n")
 	tjgs := time.Now().UnixNano()

@@ -137,6 +137,16 @@ func (d DistantJumpPointMap) get(r int, c int) *DistantJumpPoints {
 	return d[r][c]
 }
 
+func (d DistantJumpPointMap) getBlocked(r int, c int) int {
+	var blocked int
+	for i := 0; i < 8; i++ {
+		if 0 == d[r][c].get(i) {
+			blocked |= (1 << uint(i))
+		}
+	}
+	return blocked
+}
+
 func (d *DistantJumpPointMap) CalculateDistantJumpPointMapLeft() {
 	var countMovingLeft int
 	var jumpPointLastSeen bool

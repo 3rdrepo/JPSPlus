@@ -10,14 +10,14 @@ func TestJPSplus(*testing.T) {
 
 	// fmt.Println(DefaultBoolMap.toString())
 	timePreprocessMapStart := time.Now().UnixNano()
-	PreprocessMap("../../map/map100x100.png")
+	PreprocessMap("../../map/map3kx3k.png")
 	timePreprocessMapEnd := time.Now().UnixNano()
 	PrintTime("timePreprocessMap", timePreprocessMapStart, timePreprocessMapEnd)
 
 	jps := NewJPSPlus()
 
 	s := LocJPS{0, 0}
-	g := LocJPS{99, 99}
+	g := LocJPS{2999, 2999}
 	timeGetPathStart := time.Now().UnixNano()
 
 	_, ok := jps.GetPath(s, g)
