@@ -17,7 +17,7 @@ func TestJPSplus(*testing.T) {
 	jps := NewJPSPlus()
 
 	s := LocJPS{0, 0}
-	g := LocJPS{2999, 2999}
+	g := LocJPS{2999, 2749}
 	timeGetPathStart := time.Now().UnixNano()
 
 	_, ok := jps.GetPath(s, g)
