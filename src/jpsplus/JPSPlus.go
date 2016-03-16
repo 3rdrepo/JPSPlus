@@ -1,7 +1,7 @@
 package jpsplus
 
 import (
-	"fmt"
+// "fmt"
 )
 
 const (
@@ -48,7 +48,7 @@ func NewJPSPlus() *JPSPlus {
 }
 
 func (j *JPSPlus) GetPath(s LocJPS, g LocJPS) ([]LocJPS, bool) {
-	fmt.Println("GetPath")
+	// fmt.Println("GetPath")
 	startRow := s.Y
 	startCol := s.X
 	j.m_goalRow = g.Y
@@ -266,7 +266,6 @@ func MacroExploreLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBo
 }
 
 func MacroExploreDownLeft(currentNode *PathfindingNode, jump *JumpDistancesAndGoalBounds, jpsPlus *JPSPlus) {
-	// fmt.Println("MacroExploreDownLeft")
 
 	// if jpsPlus.m_goalRow >= jump.bounds.get(DownLeft, MinRow) &&
 	// 	jpsPlus.m_goalRow <= jump.bounds.get(DownLeft, MaxRow) &&

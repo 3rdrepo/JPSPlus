@@ -6,7 +6,11 @@
 # Folders
 _obj
 _test
-
+logs
+ebin
+*.beam
+*.app
+.DS_Store
 # Architecture specific extensions/prefixes
 *.[568vq]
 [568vq].out
