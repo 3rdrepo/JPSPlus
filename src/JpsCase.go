@@ -1,6 +1,6 @@
 package jpsplus
 
-type FunctionPointer func(*PathfindingNode, *JumpDistancesAndGoalBounds, *JPSPlus)
+type FunctionPointer func(*PathfindingNode, *Jump, *JPSPlus)
 
 var exploreDirections = []FunctionPointer{
 	JPSPlusExplore_D,
