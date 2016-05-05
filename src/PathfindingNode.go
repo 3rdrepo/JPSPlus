@@ -6,22 +6,28 @@ const (
 	PathfindingNode_OnClosed
 )
 
-type PathfindingNode struct {
-	parent              *PathfindingNode
+type Node struct {
+	parent              *Node
 	row                 int
 	col                 int
+	pos                 int
 	givenCost           int64
 	finalCost           int64
 	iteration           int
 	directionFromParent int
 	listStatus          int
+	heap_index          int
 }
 
-func newPathfindingNode(r int, c int) *PathfindingNode {
-	node := new(PathfindingNode)
+func newNode(r int, c int) *Node {
+	node := new(Node)
 	node.row = r
 	node.col = c
+	node.pos = r*MapWidth + c
 	node.listStatus = PathfindingNode_OnNone
-	node.iteration = 0
 	return node
+}
+
+func (this Node) equal(n *Node) bool {
+	return this.row == n.row && this.col == n.col
 }

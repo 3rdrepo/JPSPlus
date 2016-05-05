@@ -7,6 +7,11 @@ const (
 )
 
 const (
+	MapWidth  = 10
+	MapHeight = 10
+)
+
+const (
 	SQRT_2                 = 3363
 	SQRT_2_MINUS_ONE       = 985
 	FIXED_POINT_MULTIPLIER = 100000
@@ -19,77 +24,76 @@ type LocJPS struct {
 	Col int
 }
 
-type JPSPlus struct {
-	simpleUnsortedPriorityQueue *SimpleUnsortedPriorityQueue
-	fastStack                   *FastStack
-	currentIteration            int
-	goalNode                    *PathfindingNode
-	goalRow                     int
-	goalCol                     int
+type nodeList map[int]*Node
+
+func newNodeList() nodeList {
+	return make(nodeList)
 }
 
-func NewJPSPlus() *JPSPlus {
+func (n nodeList) addNode(node *Node) {
+	n[node.pos] = node
+}
+
+func (n nodeList) getNode(pos int) *Node {
+	return n[pos]
+}
+
+func (n nodeList) removeNode(pos int) {
+	delete(n, pos)
+}
+
+func (n nodeList) hasNode(pos int) bool {
+	_, ok := n[pos]
+	return ok
+}
+
+func (n nodeList) len() int {
+	return len(n)
+}
+
+type JPSPlus struct {
+	fastStack *PriorityQueue
+	startNode *PathfindingNode
+	goalNode  *PathfindingNode
+	closeSet  *nodeList
+}
+
+func NewJPSPlus(sRow, sCol, gRow, gCol int) *JPSPlus {
 	j := new(JPSPlus)
-	j.currentIteration = 1
-	j.simpleUnsortedPriorityQueue = newSimpleUnsortedPriorityQueue(10000)
-	j.fastStack = newFastStack(1000)
+	j.startNode = newNode(sRow, sCol)
+	j.goalNode = newNode(gRow, gCol)
+	j.fastStack = newPriorityQueue()
+	j.closeSet = newNodeList()
+	j.closeSet.addNode(j.startNode)
+
 	return j
 }
 
-func (j *JPSPlus) GetPath(sRow, sCol, gRow, gCol int) (*[][2]int, bool) {
+func (this *JumpMap) GetPath(sRow, sCol, gRow, gCol int) (path []LocJPS, isFind bool) {
 	// fmt.Println("GetPath")
-	startRow := sRow
-	startCol := sCol
-	j.goalRow = gRow
-	j.goalCol = gCol
-
-	j.goalNode = newPathfindingNode(j.goalRow, j.goalCol)
-	j.currentIteration += 1
-
-	j.fastStack.Reset()
-	j.simpleUnsortedPriorityQueue.Reset()
-
-	startNode := newPathfindingNode(startRow, startCol)
-	startNode.parent = nil
-	startNode.givenCost = 0
-	startNode.finalCost = 0
-	startNode.listStatus = PathfindingNode_OnOpen
-	startNode.iteration = j.currentIteration
-
-	status := j.SearchLoop(startNode)
-	// fmt.Printf("status == %#v\n", status)
-
-	if status == PathFound {
-		path := j.FinalizePath() //路径后续处理
-		// fmt.Printf("path == %v\n", path)
-		return path, true
+	if sRow == gRow && sCol == gCol {
+		isFind = true
 	} else {
-		return &([][2]int{}), false
+		jps := NewJPSPlus(gRow, gCol)
+		status := this.SearchLoop(jps)
+		// fmt.Printf("status == %#v\n", status)
+
+		if status == PathFound {
+			path = jps.FinalizePath() //路径后续处理
+			isFind = true
+
+			// fmt.Printf("path == %v\n", path)
+		}
 	}
+	return
 }
 
-func (j *JPSPlus) SearchLoop(startNode *PathfindingNode) int {
+func (this *JumpMap) SearchLoop(jps *JPSPlus) int {
+	jumpNode := this.Jump(jps.startNode.row, jps.startNode.col)
+	JPSPlusExplore_AllDirections(jps.startNode, jumpNode, j)
 
-	if startNode == j.goalNode {
-		return PathFound
-	}
-
-	// jumpDistancesAndGoalBounds := &j.m_jumpDistancesAndGoalBounds[startNode.row][startNode.col]
-	jump := DefaultJumpMap.Jump(startNode.row, startNode.col)
-
-	JPSPlusExplore_AllDirections(startNode, jump, j)
-	startNode.listStatus = PathfindingNode_OnClosed
-	// fmt.Println(!j.simpleUnsortedPriorityQueue.Empty())
-	// fmt.Println(!j.fastStack.Empty())
-
-	for !j.simpleUnsortedPriorityQueue.Empty() || !j.fastStack.Empty() {
-		var currentNode *PathfindingNode
-
-		if !j.fastStack.Empty() {
-			currentNode = j.fastStack.Pop()
-		} else {
-			currentNode = j.simpleUnsortedPriorityQueue.Pop()
-		}
+	for 0 != jps.fastStack.Len() {
+		currentNode := jps.fastStack.Pop()
 
 		if currentNode == j.goalNode {
 			return PathFound

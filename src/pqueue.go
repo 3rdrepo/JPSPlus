@@ -5,49 +5,55 @@ import (
 	//"fmt"
 )
 
-type PriorityQueue []*Node
-
-func (pq PriorityQueue) Len() int {
-	return len(pq)
+type PriorityQueue struct {
+	pos  int
+	node map[int]*Node
 }
 
-func (pq PriorityQueue) Less(i, j int) bool {
-	return pq[i].f < pq[j].f
+func newPriorityQueue() *PriorityQueue {
+	p := new(PriorityQueue)
+	p.node = make(map[int]*Node)
+	return p
 }
 
-func (pq PriorityQueue) Swap(i, j int) {
-	pq[i], pq[j] = pq[j], pq[i]
-	pq[i].heap_index = i
-	pq[j].heap_index = j
+func (p PriorityQueue) Len() int {
+	return len(p.node)
 }
 
-func (pq *PriorityQueue) Push(x interface{}) {
-	a := *pq
-	n := len(a)
-	a = a[0 : n+1]
-	item := x.(*Node)
-	item.heap_index = n
-	a[n] = item
-	*pq = a
+func (p PriorityQueue) Less(i, j int) bool {
+	return p.node[i].finalCost < p.node[j].finalCost
 }
 
-func (pq *PriorityQueue) Pop() interface{} {
-	a := *pq
-	n := len(a)
-	item := a[n-1]
-	item.heap_index = -1
-	*pq = a[0 : n-1]
+func (p PriorityQueue) Swap(i, j int) {
+	p.node[i], p.node[j] = p.node[j], p.node[i]
+	p.node[i].heap_index = i
+	p.node[j].heap_index = j
+}
+
+func (p *PriorityQueue) Push(x interface{}) {
+	item, ok := x.(*Node)
+	if ok {
+		item.heap_index = p.pos
+		p.node[p.pos] = item
+		p.pos++
+	}
+}
+
+func (p *PriorityQueue) Pop() interface{} {
+	p.pos--
+	item := p.node[p.pos]
+	delete(p.node, p.pos)
 	return item
 }
 
-func (pq *PriorityQueue) PushNode(n *Node) {
-	heap.Push(pq, n)
+func (p *PriorityQueue) PushNode(n *Node) {
+	heap.Push(p, n)
 }
 
-func (pq *PriorityQueue) PopNode() *Node {
-	return heap.Pop(pq).(*Node)
+func (p *PriorityQueue) PopNode() *Node {
+	return heap.Pop(p).(*Node)
 }
 
-func (pq *PriorityQueue) RemoveNode(n *Node) {
-	heap.Remove(pq, n.heap_index)
+func (p *PriorityQueue) RemoveNode(n *Node) {
+	heap.Remove(p, n.heap_index)
 }

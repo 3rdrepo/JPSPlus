@@ -7,17 +7,9 @@ const (
 	MovingLeft
 )
 
-type JumpPoint [][]int
+type JumpPoint [MapHeight][MapWidth]int
 
-func newJumpPoint(width int, height int) *JumpPoint {
-	j := make(JumpPoint, height)
-	for r := 0; r < height; r++ {
-		j[r] = make([]int, width)
-	}
-	return &j
-}
-
-func (j JumpPoint) move(r int, c int, v int) {
+func (j *JumpPoint) move(r int, c int, v int) {
 	j[r][c] |= v
 }
 
