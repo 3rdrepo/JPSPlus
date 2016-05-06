@@ -31,8 +31,8 @@ func (j *JumpMap) setBlocked(r int, c int, b int) {
 	j[r][c].blocked = b
 }
 
-func (j JumpMap) Jump(r int, c int) Jump {
-	return j[r][c]
+func (j JumpMap) Jump(r int, c int) *Jump {
+	return &(j[r][c])
 }
 
 func (j *JumpMap) CalculateDistantJumpPointMapLeft(b *BoolMap, jp *JumpPoint) {
