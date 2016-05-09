@@ -17,13 +17,18 @@ type Jump struct {
 	blocked int
 }
 
-type JumpMap [MapHeight][MapWidth]Jump
+type JumpMap [MapHeight][MapWidth]*Jump
 
 func (j *JumpMap) setJumpdistance(r int, c int, dir int, v int) {
-	j[r][c].distant[dir] = v
+	jump := j[r][c]
+	if nil == jump {
+		jump = new(Jump)
+		j[r][c] = jump
+	}
+	jump.distant[dir] = v
 }
 
-func (j JumpMap) getJumpdistance(r int, c int, dir int) int {
+func (j *JumpMap) getJumpdistance(r int, c int, dir int) int {
 	return j[r][c].distant[dir]
 }
 
@@ -31,8 +36,8 @@ func (j *JumpMap) setBlocked(r int, c int, b int) {
 	j[r][c].blocked = b
 }
 
-func (j JumpMap) Jump(r int, c int) *Jump {
-	return &(j[r][c])
+func (j *JumpMap) Jump(r int, c int) *Jump {
+	return j[r][c]
 }
 
 func (j *JumpMap) CalculateDistantJumpPointMapLeft(b *BoolMap, jp *JumpPoint) {
@@ -242,8 +247,9 @@ func (j *JumpMap) CalculateDistantJumpPointMap(b *BoolMap, jp *JumpPoint) {
 }
 
 func (j *JumpMap) CalculateBlock() {
-	for r, data := range *j {
-		for c, jump := range data {
+	for r := 0; r < MapHeight; r++ {
+		for c := 0; c < MapWidth; c++ {
+			jump := j[r][c]
 			var blocked int
 			for i := 0; i < 8; i++ {
 				if 0 == jump.distant[i] {

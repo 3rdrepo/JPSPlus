@@ -26,13 +26,13 @@ type LocJPS struct {
 }
 
 type Node struct {
-	row        int
-	col        int
-	givenCost  int
-	finalCost  int
-	parent     *Node
-	direction  int
-	heap_index int
+	row       int
+	col       int
+	givenCost int
+	finalCost int
+	parent    *Node
+	direction int
+	heapIndex int
 }
 
 func newNode(r int, c int) *Node {

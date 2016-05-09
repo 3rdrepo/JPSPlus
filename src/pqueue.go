@@ -16,24 +16,24 @@ func newPriorityQueue() *PriorityQueue {
 	return p
 }
 
-func (p PriorityQueue) Len() int {
+func (p *PriorityQueue) Len() int {
 	return len(p.node)
 }
 
-func (p PriorityQueue) Less(i, j int) bool {
+func (p *PriorityQueue) Less(i, j int) bool {
 	return p.node[i].finalCost < p.node[j].finalCost
 }
 
-func (p PriorityQueue) Swap(i, j int) {
+func (p *PriorityQueue) Swap(i, j int) {
 	p.node[i], p.node[j] = p.node[j], p.node[i]
-	p.node[i].heap_index = i
-	p.node[j].heap_index = j
+	p.node[i].heapIndex = i
+	p.node[j].heapIndex = j
 }
 
 func (p *PriorityQueue) Push(x interface{}) {
 	item, ok := x.(*Node)
 	if ok {
-		item.heap_index = p.pos
+		item.heapIndex = p.pos
 		p.node[p.pos] = item
 		p.pos++
 	}
@@ -55,5 +55,5 @@ func (p *PriorityQueue) PopNode() *Node {
 }
 
 func (p *PriorityQueue) RemoveNode(n *Node) {
-	heap.Remove(p, n.heap_index)
+	heap.Remove(p, n.heapIndex)
 }

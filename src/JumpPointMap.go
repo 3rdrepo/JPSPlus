@@ -13,7 +13,7 @@ func (j *JumpPoint) move(r int, c int, v int) {
 	j[r][c] |= v
 }
 
-func (j JumpPoint) get(r int, c int) int {
+func (j *JumpPoint) get(r int, c int) int {
 	return j[r][c]
 }
 
