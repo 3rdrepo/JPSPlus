@@ -16,7 +16,7 @@ const (
 func TestJpsplus(t *testing.T) {
 
 	start := time.Now().UnixNano()
-	map_data := GetMapFromImage("../map/map100x100.png")
+	map_data := GetMapFromImage("../map/map3kx3k.png")
 	end := time.Now().UnixNano()
 	printTime("open file", start, end)
 	if map_data == nil {
@@ -31,12 +31,12 @@ func TestJpsplus(t *testing.T) {
 
 	// fmt.Println(p)
 	start = time.Now().UnixNano()
-	path, ok := p.GetPath(0, 0, 99, 99)
+	path, ok := p.GetPath(0, 0, 2999, 2999)
 	end = time.Now().UnixNano()
 	printTime("GetPath", start, end)
 	if ok {
-		fmt.Println(str_map(map_data, path))
-		// fmt.Println(path)
+		// fmt.Println(str_map(map_data, path))
+		fmt.Println(path)
 	} else {
 		fmt.Println("not path !")
 	}

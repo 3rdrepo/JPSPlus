@@ -32,14 +32,6 @@ func (j *JumpMap) getJumpdistance(r int, c int, dir int) int {
 	return j[r][c].distant[dir]
 }
 
-func (j *JumpMap) setBlocked(r int, c int, b int) {
-	j[r][c].blocked = b
-}
-
-func (j *JumpMap) Jump(r int, c int) *Jump {
-	return j[r][c]
-}
-
 func (j *JumpMap) CalculateDistantJumpPointMapLeft(b *BoolMap, jp *JumpPoint) {
 	var countMovingLeft int
 	var jumpPointLastSeen bool
@@ -47,21 +39,22 @@ func (j *JumpMap) CalculateDistantJumpPointMapLeft(b *BoolMap, jp *JumpPoint) {
 		countMovingLeft = -1
 		jumpPointLastSeen = false
 		for c := 0; c < MapWidth; c++ {
-			if !b.IsEmpty(r, c) {
-				countMovingLeft = -1
-				jumpPointLastSeen = false
-				j.setJumpdistance(r, c, Left, 0)
-			} else {
+			jump := new(Jump)
+			j[r][c] = jump
+			if b[r][c] {
 				countMovingLeft += 1
 				if jumpPointLastSeen {
-					j.setJumpdistance(r, c, Left, countMovingLeft)
+					jump.distant[Left] = countMovingLeft
 				} else {
-					j.setJumpdistance(r, c, Left, -countMovingLeft)
+					jump.distant[Left] = -countMovingLeft
 				}
-				if (jp.get(r, c) & MovingLeft) > 0 {
+				if (jp[r][c] & MovingLeft) == MovingLeft {
 					countMovingLeft = 0
 					jumpPointLastSeen = true
 				}
+			} else {
+				countMovingLeft = -1
+				jumpPointLastSeen = false
 			}
 		}
 	}
@@ -74,21 +67,20 @@ func (j *JumpMap) CalculateDistantJumpPointMapRight(b *BoolMap, jp *JumpPoint) {
 		countMovingRight = -1
 		jumpPointLastSeen = false
 		for c := MapWidth - 1; c >= 0; c-- {
-			if !b.IsEmpty(r, c) {
-				countMovingRight = -1
-				jumpPointLastSeen = false
-				j.setJumpdistance(r, c, Right, 0)
-			} else {
+			if b[r][c] {
 				countMovingRight += 1
 				if jumpPointLastSeen {
-					j.setJumpdistance(r, c, Right, countMovingRight)
+					j[r][c].distant[Right] = countMovingRight
 				} else {
-					j.setJumpdistance(r, c, Right, -countMovingRight)
+					j[r][c].distant[Right] = -countMovingRight
 				}
-				if (jp.get(r, c) & MovingRight) > 0 {
+				if (jp[r][c] & MovingRight) == MovingRight {
 					countMovingRight = 0
 					jumpPointLastSeen = true
 				}
+			} else {
+				countMovingRight = -1
+				jumpPointLastSeen = false
 			}
 		}
 	}
@@ -101,22 +93,20 @@ func (j *JumpMap) CalculateDistantJumpPointMapUp(b *BoolMap, jp *JumpPoint) {
 		countMovingUp = -1
 		jumpPointLastSeen = false
 		for r := 0; r < MapHeight; r++ {
-			if !b.IsEmpty(r, c) {
-				countMovingUp = -1
-				jumpPointLastSeen = false
-				// p.m_distantJumpPointMap[r][c].jumpDistance[Up] = 0
-				j.setJumpdistance(r, c, Up, 0)
-			} else {
+			if b[r][c] {
 				countMovingUp += 1
 				if jumpPointLastSeen {
-					j.setJumpdistance(r, c, Up, countMovingUp)
+					j[r][c].distant[Up] = countMovingUp
 				} else {
-					j.setJumpdistance(r, c, Up, -countMovingUp)
+					j[r][c].distant[Up] = -countMovingUp
 				}
-				if (jp.get(r, c) & MovingUp) > 0 {
+				if (jp[r][c] & MovingUp) == MovingUp {
 					countMovingUp = 0
 					jumpPointLastSeen = true
 				}
+			} else {
+				countMovingUp = -1
+				jumpPointLastSeen = false
 			}
 		}
 	}
@@ -129,21 +119,20 @@ func (j *JumpMap) CalculateDistantJumpPointMapDown(b *BoolMap, jp *JumpPoint) {
 		countMovingDown = -1
 		jumpPointLastSeen = false
 		for r := MapHeight - 1; r >= 0; r-- {
-			if !b.IsEmpty(r, c) {
-				countMovingDown = -1
-				jumpPointLastSeen = false
-				j.setJumpdistance(r, c, Down, 0)
-			} else {
+			if b[r][c] {
 				countMovingDown += 1
 				if jumpPointLastSeen {
-					j.setJumpdistance(r, c, Down, countMovingDown)
+					j[r][c].distant[Down] = countMovingDown
 				} else {
-					j.setJumpdistance(r, c, Down, -countMovingDown)
+					j[r][c].distant[Down] = -countMovingDown
 				}
-				if (jp.get(r, c) & MovingDown) > 0 {
+				if (jp[r][c] & MovingDown) == MovingDown {
 					countMovingDown = 0
 					jumpPointLastSeen = true
 				}
+			} else {
+				countMovingDown = -1
+				jumpPointLastSeen = false
 			}
 		}
 	}
@@ -152,37 +141,37 @@ func (j *JumpMap) CalculateDistantJumpPointMapDown(b *BoolMap, jp *JumpPoint) {
 func (j *JumpMap) CalculateDistantJumpPointMapUpLeftandUpRight(b *BoolMap) {
 	for r := 0; r < MapHeight; r++ {
 		for c := 0; c < MapWidth; c++ {
-			if b.IsEmpty(r, c) {
+			if b[r][c] {
 				//UpLeft
-				if r == 0 || c == 0 || (!b.IsEmpty(r-1, c) || !b.IsEmpty(r, c-1) || !b.IsEmpty(r-1, c-1)) {
-					j.setJumpdistance(r, c, UpLeft, 0)
-				} else if b.IsEmpty(r-1, c) && b.IsEmpty(r, c-1) &&
-					(j.getJumpdistance(r-1, c-1, Up) > 0 ||
-						j.getJumpdistance(r-1, c-1, Left) > 0) {
-					j.setJumpdistance(r, c, UpLeft, 1)
-				} else {
-					jumpDistance := j.getJumpdistance(r-1, c-1, UpLeft)
-
-					if jumpDistance > 0 {
-						j.setJumpdistance(r, c, UpLeft, jumpDistance+1)
+				prexR := r - 1
+				prexC := c - 1
+				if r > 0 && c > 0 && b[prexR][c] && b[r][c] && b[prexR][prexC] {
+					if b[prexR][c] && b[r][prexC] &&
+						(j[prexR][prexC].distant[Up] > 0 || j[prexR][prexC].distant[Left] > 0) {
+						j[r][c].distant[UpLeft] = 1
 					} else {
-						j.setJumpdistance(r, c, UpLeft, jumpDistance-1)
+						jumpDistance := j[prexR][prexC].distant[UpLeft]
+						if jumpDistance > 0 {
+							j[prexR][prexC].distant[UpLeft] = jumpDistance + 1
+						} else {
+							j[prexR][prexC].distant[UpLeft] = jumpDistance - 1
+						}
 					}
 				}
-
 				//UpRight
-				if r == 0 || c == MapWidth-1 || (!b.IsEmpty(r-1, c) || !b.IsEmpty(r, c+1) || !b.IsEmpty(r-1, c+1)) {
-					j.setJumpdistance(r, c, UpRight, 0)
-				} else if b.IsEmpty(r-1, c) && b.IsEmpty(r, c+1) &&
-					(j.getJumpdistance(r-1, c+1, Up) > 0 ||
-						j.getJumpdistance(r-1, c+1, Right) > 0) {
-					j.setJumpdistance(r, c, UpRight, 1)
-				} else {
-					jumpDistance := j.getJumpdistance(r-1, c+1, UpRight)
-					if jumpDistance > 0 {
-						j.setJumpdistance(r, c, UpRight, jumpDistance+1)
+				nextC := c + 1
+				if r > 0 && c < MapWidth-1 && b[prexR][c] && b[r][nextC] && b[prexR][nextC] {
+					if b[prexR][c] && b[r][nextC] &&
+						(j[prexR][nextC].distant[Up] > 0 ||
+							j[prexR][nextC].distant[Right] > 0) {
+						j[r][c].distant[UpRight] = 1
 					} else {
-						j.setJumpdistance(r, c, UpRight, jumpDistance-1)
+						jumpDistance := j[prexR][c+1].distant[UpRight]
+						if jumpDistance > 0 {
+							j[r][c].distant[UpRight] = jumpDistance + 1
+						} else {
+							j[r][c].distant[UpRight] = jumpDistance - 1
+						}
 					}
 				}
 			}
@@ -192,38 +181,36 @@ func (j *JumpMap) CalculateDistantJumpPointMapUpLeftandUpRight(b *BoolMap) {
 func (j *JumpMap) CalculateDistantJumpPointMapDownLeftandDownRight(b *BoolMap) {
 	for r := MapHeight - 1; r >= 0; r-- {
 		for c := 0; c < MapWidth; c++ {
-			if b.IsEmpty(r, c) {
-				if r == MapHeight-1 || c == 0 ||
-					(!b.IsEmpty(r+1, c) || !b.IsEmpty(r, c-1) || !b.IsEmpty(r+1, c-1)) {
-					j.setJumpdistance(r, c, DownLeft, 0)
-				} else if b.IsEmpty(r+1, c) && b.IsEmpty(r, c-1) &&
-					(j.getJumpdistance(r+1, c-1, Down) > 0 ||
-						j.getJumpdistance(r+1, c-1, Left) > 0) {
-					j.setJumpdistance(r, c, DownLeft, 1)
-				} else {
-					// jumpDistance := p.m_distantJumpPointMap[r+1][c-1].jumpDistance[DownLeft]
-					jumpDistance := j.getJumpdistance(r+1, c-1, DownLeft)
-					if jumpDistance > 0 {
-						// p.m_distantJumpPointMap[r][c].jumpDistance[DownLeft] = 1 + jumpDistance
-						j.setJumpdistance(r, c, DownLeft, jumpDistance+1)
+			if b[r][c] {
+				nextR := r + 1
+				prexC := c - 1
+				if r < MapHeight-1 && c > 0 && b[nextR][c] && b[r][prexC] && b[nextR][prexC] {
+					if b[nextR][c] && b[r][prexC] &&
+						(j[nextR][prexC].distant[Down] > 0 ||
+							j[nextR][prexC].distant[Left] > 0) {
+						j[r][c].distant[DownLeft] = 1
 					} else {
-						j.setJumpdistance(r, c, DownLeft, jumpDistance-1)
+						jumpDistance := j[nextR][prexC].distant[DownLeft]
+						if jumpDistance > 0 {
+							j[r][c].distant[DownLeft] = jumpDistance + 1
+						} else {
+							j[r][c].distant[DownLeft] = jumpDistance - 1
+						}
 					}
 				}
-
-				if r == MapHeight-1 || c == MapWidth-1 || (!b.IsEmpty(r+1, c) || !b.IsEmpty(r, c+1) || !b.IsEmpty(r+1, c+1)) {
-					j.setJumpdistance(r, c, DownRight, 0)
-				} else if b.IsEmpty(r+1, c) && b.IsEmpty(r, c+1) &&
-					(j.getJumpdistance(r+1, c+1, Down) > 0 ||
-						j.getJumpdistance(r+1, c+1, Right) > 0) {
-					j.setJumpdistance(r, c, DownRight, 1)
-				} else {
-					jumpDistance := j.getJumpdistance(r+1, c+1, DownRight)
-
-					if jumpDistance > 0 {
-						j.setJumpdistance(r, c, DownRight, jumpDistance+1)
+				nextC := c + 1
+				if r < MapHeight-1 && c < MapWidth-1 && b[nextR][c] && b[r][nextC] && b[nextR][nextC] {
+					if b[nextR][c] && b[r][nextC] &&
+						(j[nextR][nextC].distant[Down] > 0 ||
+							j[nextR][nextC].distant[Right] > 0) {
+						j[r][c].distant[DownRight] = 1
 					} else {
-						j.setJumpdistance(r, c, DownRight, jumpDistance-1)
+						jumpDistance := j[nextR][nextC].distant[DownRight]
+						if jumpDistance > 0 {
+							j[r][c].distant[DownRight] = jumpDistance + 1
+						} else {
+							j[r][c].distant[DownRight] = jumpDistance - 1
+						}
 					}
 				}
 			}
@@ -247,16 +234,17 @@ func (j *JumpMap) CalculateDistantJumpPointMap(b *BoolMap, jp *JumpPoint) {
 }
 
 func (j *JumpMap) CalculateBlock() {
+	var i uint
 	for r := 0; r < MapHeight; r++ {
 		for c := 0; c < MapWidth; c++ {
 			jump := j[r][c]
 			var blocked int
-			for i := 0; i < 8; i++ {
+			for i = 0; i < 8; i++ {
 				if 0 == jump.distant[i] {
-					blocked |= (1 << uint(i))
+					blocked |= (1 << i)
 				}
 			}
-			j.setBlocked(r, c, blocked)
+			j[r][c].blocked = blocked
 		}
 	}
 }

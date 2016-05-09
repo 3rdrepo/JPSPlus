@@ -1,18 +1,8 @@
 package jpsplus
 
-import (
-	"fmt"
-)
-
 const (
-	Working = iota
-	PathFound
-	NoPathExists
-)
-
-const (
-	MapWidth  = 100
-	MapHeight = 100
+	MapWidth  = 3000
+	MapHeight = 3000
 )
 
 const (
@@ -42,7 +32,7 @@ func newNode(r int, c int) *Node {
 	return node
 }
 
-func (this Node) equal(n *Node) bool {
+func (this *Node) equal(n *Node) bool {
 	return this.row == n.row && this.col == n.col
 }
 
@@ -94,8 +84,8 @@ func (this *JumpMap) GetPath(sRow, sCol, gRow, gCol int) (path []LocJPS, isFind 
 		isFind = true
 	} else {
 		jps := NewJPSPlus(sRow, sCol, gRow, gCol)
-		status := this.SearchLoop(jps)
-		if status == PathFound {
+		seccus := this.SearchLoop(jps)
+		if seccus {
 			path = jps.FinalizePath()
 			isFind = true
 		}
@@ -103,73 +93,25 @@ func (this *JumpMap) GetPath(sRow, sCol, gRow, gCol int) (path []LocJPS, isFind 
 	return
 }
 
-func (this *JumpMap) SearchLoop(jps *JPSPlus) int {
-	jumpNode := this.Jump(jps.startNode.row, jps.startNode.col)
+func (this *JumpMap) SearchLoop(jps *JPSPlus) bool {
+	jumpNode := this[jps.startNode.row][jps.startNode.col]
 	JPSPlusExplore_AllDirections(jps.startNode, jumpNode, jps)
 
 	for 0 != jps.fastStack.Len() {
 		cur := jps.fastStack.PopNode()
 		jps.openSet.remove(cur.row, cur.col)
 		if cur.equal(jps.goalNode) {
-			return PathFound
+			return true
 		} else {
 			jps.closeSet.insert(cur)
-			jump := this.Jump(cur.row, cur.col)
+			jump := this[cur.row][cur.col]
 			exploreDirections[(jump.blocked*8)+cur.direction](cur, jump, jps)
 		}
 	}
-	return NoPathExists
+	return false
 }
 
 func (j *JPSPlus) FinalizePath() (path []LocJPS) {
-	// var prevNode *Node
-	// curNode := j.goalNode
-
-	// for nil != curNode {
-	// 	loc := LocJPS{curNode.row, curNode.col}
-
-	// 	if prevNode != nil {
-	// 		xDiff := curNode.col - prevNode.col
-	// 		yDiff := curNode.row - prevNode.row
-
-	// 		xInc := 0
-	// 		yInc := 0
-
-	// 		if xDiff > 0 {
-	// 			xInc = 1
-	// 		} else if xDiff < 0 {
-	// 			xInc = -1
-	// 			xDiff = -xDiff
-	// 		}
-
-	// 		if yDiff > 0 {
-	// 			yInc = 1
-	// 		} else if yDiff < 0 {
-	// 			yInc = -1
-	// 			yDiff = -yDiff
-	// 		}
-
-	// 		x := prevNode.col
-	// 		y := prevNode.row
-	// 		steps := xDiff - 1
-	// 		if yDiff > xDiff {
-	// 			steps = yDiff - 1
-	// 		}
-
-	// 		for i := 0; i < steps; i++ {
-	// 			x += xInc
-	// 			y += yInc
-
-	// 			locNew := LocJPS{y, x}
-	// 			path = append(path, locNew)
-	// 		}
-	// 	}
-
-	// 	path = append(path, loc)
-	// 	prevNode = curNode
-	// 	curNode = curNode.parent
-	// }
-	fmt.Println(j.openSet.len(), j.closeSet.len(), j.fastStack.Len())
 	for cur := j.goalNode; nil != cur; cur = cur.parent {
 		path = append(path, LocJPS{cur.row, cur.col})
 	}
