@@ -1,18 +1,28 @@
 package jpsplus
 
 const (
-	MapWidth  = 3000
-	MapHeight = 3000
+	MapWidth = 100
+	MapHeight
+	TileWidth = 100
+	TileHeight
 )
 
 const (
 	COST_STRAIGHT = 1000
 	COST_DIAGONAL = 1414
+	CloseSetMax   = 200
 )
 
 type LocJPS struct {
-	Row int
-	Col int
+	row int
+	col int
+}
+
+func newLocJPS(row int, col int) *LocJPS {
+	l := new(LocJPS)
+	l.row = row
+	l.col = col
+	return l
 }
 
 type Node struct {
@@ -67,7 +77,7 @@ type JPSPlus struct {
 	closeSet  nodeList
 }
 
-func NewJPSPlus(sRow, sCol, gRow, gCol int) *JPSPlus {
+func NewJPSPlus(sRow int, sCol int, gRow int, gCol int) *JPSPlus {
 	j := new(JPSPlus)
 	j.startNode = newNode(sRow, sCol)
 	j.goalNode = newNode(gRow, gCol)
@@ -79,25 +89,31 @@ func NewJPSPlus(sRow, sCol, gRow, gCol int) *JPSPlus {
 	return j
 }
 
-func (this *JumpMap) GetPath(sRow, sCol, gRow, gCol int) (path []LocJPS, isFind bool) {
-	if sRow == gRow && sCol == gCol {
+func (this *JumpMap) GetPath(sRow int, sCol int, gRow int, gCol int) (path map[int]*LocJPS, isFind bool) {
+	jps := NewJPSPlus(sRow, sCol, gRow, gCol)
+	if this.SearchLoop(jps) {
+		path = jps.FinalizePath()
 		isFind = true
-	} else {
-		jps := NewJPSPlus(sRow, sCol, gRow, gCol)
-		seccus := this.SearchLoop(jps)
-		if seccus {
-			path = jps.FinalizePath()
-			isFind = true
-		}
 	}
+	return
+}
+
+func logicToTile(x int, y int) (r int, c int) {
+	r = y / TileHeight
+	c = x / TileWidth
+	return
+}
+
+func tileToLogic(r int, c int) (x int, y int) {
+	y = r * TileHeight
+	x = c * TileWidth
 	return
 }
 
 func (this *JumpMap) SearchLoop(jps *JPSPlus) bool {
 	jumpNode := this[jps.startNode.row][jps.startNode.col]
 	JPSPlusExplore_AllDirections(jps.startNode, jumpNode, jps)
-
-	for 0 != jps.fastStack.Len() {
+	for 0 != jps.fastStack.Len() && jps.closeSet.len() < CloseSetMax {
 		cur := jps.fastStack.PopNode()
 		jps.openSet.remove(cur.row, cur.col)
 		if cur.equal(jps.goalNode) {
@@ -111,15 +127,12 @@ func (this *JumpMap) SearchLoop(jps *JPSPlus) bool {
 	return false
 }
 
-func (j *JPSPlus) FinalizePath() (path []LocJPS) {
-	for cur := j.goalNode; nil != cur; cur = cur.parent {
-		path = append(path, LocJPS{cur.row, cur.col})
+func (j *JPSPlus) FinalizePath() map[int]*LocJPS {
+	jump := make(map[int]*LocJPS)
+	for i, cur := 0, j.goalNode; nil != cur; cur, i = cur.parent, i+1 {
+		jump[i] = newLocJPS(cur.row, cur.col)
 	}
-
-	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
-		path[i], path[j] = path[j], path[i]
-	}
-	return
+	return jump
 }
 
 func MacroExploreDown(currentNode *Node, jump *Jump, jpsPlus *JPSPlus) {

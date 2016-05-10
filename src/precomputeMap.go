@@ -81,19 +81,6 @@ type Jump struct {
 
 type JumpMap [MapHeight][MapWidth]*Jump
 
-func (j *JumpMap) setJumpdistance(r int, c int, dir int, v int) {
-	jump := j[r][c]
-	if nil == jump {
-		jump = new(Jump)
-		j[r][c] = jump
-	}
-	jump.distant[dir] = v
-}
-
-func (j *JumpMap) getJumpdistance(r int, c int, dir int) int {
-	return j[r][c].distant[dir]
-}
-
 func (j *JumpMap) CalculateDistantJumpPointMapLeft(b *BoolMap, jp *JumpPoint) {
 	var countMovingLeft int
 	var jumpPointLastSeen bool
