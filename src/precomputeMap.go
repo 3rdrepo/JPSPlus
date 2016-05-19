@@ -201,9 +201,9 @@ func (j *JumpMap) CalculateDistantJumpPointMapUpLeftandUpRight(b *BoolMap) {
 					} else {
 						jumpDistance := j[prexR][prexC].distant[UpLeft]
 						if jumpDistance > 0 {
-							j[prexR][prexC].distant[UpLeft] = jumpDistance + 1
+							j[r][c].distant[UpLeft] = jumpDistance + 1
 						} else {
-							j[prexR][prexC].distant[UpLeft] = jumpDistance - 1
+							j[r][c].distant[UpLeft] = jumpDistance - 1
 						}
 					}
 				}
@@ -215,7 +215,7 @@ func (j *JumpMap) CalculateDistantJumpPointMapUpLeftandUpRight(b *BoolMap) {
 							j[prexR][nextC].distant[Right] > 0) {
 						j[r][c].distant[UpRight] = 1
 					} else {
-						jumpDistance := j[prexR][c+1].distant[UpRight]
+						jumpDistance := j[prexR][nextC].distant[UpRight]
 						if jumpDistance > 0 {
 							j[r][c].distant[UpRight] = jumpDistance + 1
 						} else {

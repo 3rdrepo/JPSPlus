@@ -40,13 +40,14 @@ func initJPSplus() *JumpMap {
 
 func TestJpsplus(t *testing.T) {
 	start := time.Now().UnixNano()
-	// path, ok := findPath(9999, 9999, 0, 0)
-	path, ok := JPSmap.GetPath(0, 0, 99, 0)
+	path, ok := findPath(9999, 9999, 0, 0)
+	// path, ok := JPSmap.GetPath(9999, 9999, 0, 0)
 
 	end := time.Now().UnixNano()
 	printTime("findPath", start, end)
 	if ok {
-		fmt.Println(path)
+		// fmt.Println(path)
+		fmt.Println(str_path(path))
 	} else {
 		fmt.Println("not path !")
 	}
@@ -183,13 +184,12 @@ func lineCrossTile(start *Loc, goal *Loc) bool {
 func lineCrossTileCol(start *Loc, goal *Loc) bool {
 	incX := TileWidth
 	posX := start.X/incX*incX + incX
-	endX := goal.X/incX*incX + incX
+	endX := goal.X / incX * incX
 	prexC := -1
 	if goal.X < start.X {
 		incX = -incX
-		posX = posX + incX
-		endX = endX + incX
-		prexC = -prexC
+		posX = posX - incX
+		endX = endX - incX
 	}
 	incY := (goal.Y - start.Y) * incX / (goal.X - start.X)
 	posY := start.Y + (posX-start.X)*incY/incX
@@ -210,18 +210,21 @@ func lineCrossTileCol(start *Loc, goal *Loc) bool {
 func lineCrossTileRow(start *Loc, goal *Loc) bool {
 	incY := TileHeight
 	posY := start.Y/incY*incY + incY
-	endY := goal.Y/incY*incY + incY
+	endY := goal.Y / incY * incY
 	prexR := -1
 	if goal.Y < start.Y {
 		incY = -incY
-		posY = posY + incY
-		endY = endY + incY
-		prexR = -prexR
+		posY = posY - incY
+		endY = endY - incY
 	}
 	incX := (goal.X - start.X) * incY / (goal.Y - start.Y)
 	posX := start.X + (posY-start.Y)*incX/incY
+	fmt.Println(incX, posX, incY, endY)
+
 	for ; posY != endY; posX, posY = posX+incX, posY+incY {
 		row, col := logicToTile(posX, posY)
+		fmt.Println(posX, posY)
+		fmt.Println(row+prexR, col)
 		if posX%TileWidth != 0 {
 			if !Bmap[row+prexR][col] {
 				return false
