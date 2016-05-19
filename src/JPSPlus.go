@@ -10,7 +10,7 @@ const (
 const (
 	COST_STRAIGHT = 1000
 	COST_DIAGONAL = 1414
-	CloseSetMax   = 200
+	CloseSetMax   = 500
 )
 
 type LocJPS struct {
@@ -117,6 +117,7 @@ func (this *JumpMap) SearchLoop(jps *JPSPlus) bool {
 		cur := jps.fastStack.PopNode()
 		jps.openSet.remove(cur.row, cur.col)
 		if cur.equal(jps.goalNode) {
+			jps.goalNode.parent = cur.parent
 			return true
 		} else {
 			jps.closeSet.insert(cur)

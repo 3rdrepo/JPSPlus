@@ -13,12 +13,18 @@ const (
 	s  = ms * k
 )
 
+const (
+	Map10  = "../map/map10x10.png"
+	Map100 = "../map/map100x100.png"
+	Map3k  = "../map/map3kx3k.png"
+)
+
 var JPSmap = initJPSplus()
 var Bmap = initBoolMap()
 
 func initBoolMap() *BoolMap {
 	start := time.Now().UnixNano()
-	bmap := GetMapFromImage("../map/map100x100.png")
+	bmap := GetMapFromImage(Map100)
 	end := time.Now().UnixNano()
 	printTime("open file", start, end)
 	return bmap
@@ -34,11 +40,12 @@ func initJPSplus() *JumpMap {
 
 func TestJpsplus(t *testing.T) {
 	start := time.Now().UnixNano()
-	path, ok := findPath(0, 0, 9999, 9999)
+	// path, ok := findPath(9999, 9999, 0, 0)
+	path, ok := JPSmap.GetPath(0, 0, 99, 0)
+
 	end := time.Now().UnixNano()
 	printTime("findPath", start, end)
 	if ok {
-		fmt.Println(str_path(path))
 		fmt.Println(path)
 	} else {
 		fmt.Println("not path !")
@@ -56,21 +63,20 @@ func findPath(sx int, sy int, gx int, gy int) (path map[int]*Loc, isFind bool) {
 		path[1] = gLogic
 		isFind = true
 	} else {
-		// start := time.Now().UnixNano()
+		start := time.Now().UnixNano()
 		tilePath, ok := JPSmap.GetPath(sRow, sCol, gRow, gCol)
-		// end := time.Now().UnixNano()
-		// printTime("GetPath", start, end)
+		end := time.Now().UnixNano()
+		printTime("GetPath", start, end)
 		if ok {
 			logicPath := tilePathToLogic(tilePath, sLogic, gLogic)
-			// fmt.Println(str_path(logicPath))
 			isFind = true
 			if 2 == len(logicPath) {
 				path = logicPath
 			} else {
-				// start := time.Now().UnixNano()
+				start := time.Now().UnixNano()
 				path = smoothPath(logicPath)
-				// end := time.Now().UnixNano()
-				// printTime("smoothPath", start, end)
+				end := time.Now().UnixNano()
+				printTime("smoothPath", start, end)
 			}
 		}
 	}
